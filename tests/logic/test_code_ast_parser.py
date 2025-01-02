@@ -1,10 +1,11 @@
+import sys
 import pytest
 
 import ast
 import pytest
 from typing import Optional
 
-from code_wise.logic.code_ast_parser import return_function_text
+from code_wise.logic.code_ast_parser import parse_arguments, return_function_text
 
 
 def test_return_function_text():
@@ -38,3 +39,47 @@ def test_return_function_text_no_function():
     # Test with no enclosing function (None)
     result = return_function_text(None, "dummy source code")
     assert result is None
+
+
+def test_parse_arguments_valid():
+    """Test that parse_arguments correctly parses valid input arguments."""
+    test_args = [
+        "script_name",
+        "--root-directory", "/Users/behrooz/Work/recall-api",
+        "--file-path", "/Users/behrooz/Work/recall-api/api/spam/logic/spam_prevention.py",
+    ]
+
+    # Temporarily replace sys.argv
+    sys.argv = test_args
+
+    args = parse_arguments()
+
+    assert args.root_directory == "/Users/behrooz/Work/recall-api"
+    assert args.file_path == "/Users/behrooz/Work/recall-api/api/spam/logic/spam_prevention.py"
+
+def test_parse_arguments_missing_required_args():
+    """Test that parse_arguments raises a SystemExit error when required arguments are missing."""
+    test_args = [
+        "script_name",
+        "--root-directory", "/Users/behrooz/Work/recall-api",
+        # Missing --file-path argument
+    ]
+
+    # Temporarily replace sys.argv
+    sys.argv = test_args
+
+    with pytest.raises(SystemExit):  # argparse exits the program if arguments are missing
+        parse_arguments()
+
+def test_parse_arguments_invalid_args():
+    """Test that parse_arguments raises a SystemExit error for invalid arguments."""
+    test_args = [
+        "script_name",
+        "--invalid-arg", "some_value"
+    ]
+
+    # Temporarily replace sys.argv
+    sys.argv = test_args
+
+    with pytest.raises(SystemExit):  # argparse exits the program if invalid arguments are passed
+        parse_arguments()
