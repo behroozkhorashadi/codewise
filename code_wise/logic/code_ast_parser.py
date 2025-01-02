@@ -22,16 +22,15 @@ class CallSiteInfo(NamedTuple):
     function_node: ast.FunctionDef
     file_path: str
 
-
-def find_enclosing_function(call_node: ast.Call) -> Optional[ast.FunctionDef]:
-    # Traverse up the tree until we find a FunctionDef node
-    current_node = call_node
-    while current_node:
-        if isinstance(current_node, ast.FunctionDef):
-            return current_node
-        current_node = current_node.parent  # Move to the parent node
-    print(f"Returning none for call node {call_node}")
-    return None  # Return None if no enclosing function is found
+    def find_enclosing_function(call_node: ast.Call) -> Optional[ast.FunctionDef]:
+        # Traverse up the tree until we find a FunctionDef node
+        current_node = call_node
+        while current_node:
+            if isinstance(current_node, ast.FunctionDef):
+                return current_node
+            current_node = current_node.parent  # Move to the parent node
+        print(f"Returning none for call node {call_node}")
+        return None  # Return None if no enclosing function is found
 
 
 def set_parent_pointers(node: ast.Module, parent: ast.Module = None):
@@ -43,18 +42,17 @@ def set_parent_pointers(node: ast.Module, parent: ast.Module = None):
 
 def print_enclosing_function_definition_from_file(enclosing_function: ast.FunctionDef, file_path: str):
     with open(file_path, "r") as file:
-        source_code = file.read()
-        print_enclosing_function_definition(enclosing_function, source_code)
+        file_content = file.read()
+        if result := return_function_text(enclosing_function, file_content):
+            print(result)
 
 
-def print_enclosing_function_definition(enclosing_function: ast.FunctionDef, source_code: str):
+def return_function_text(enclosing_function: ast.FunctionDef, source_code: str) -> Optional[str]:
     # Find the enclosing function
     if enclosing_function:
-        # Print the function definition
-        function_code = ast.get_source_segment(source_code, enclosing_function)
-        print(function_code)
+        return ast.get_source_segment(source_code, enclosing_function)
     else:
-        print("No enclosing function found.")
+        return None
 
 
 def get_method_body(node: ast.FunctionDef, file_path: str) -> str:
@@ -152,9 +150,7 @@ class MethodUsageCollector(ast.NodeVisitor):
 
             if len(self.method_usages[method_identifier]) < 10:
                 call_site_info = CallSiteInfo(
-                    call_node=node,
-                    function_node=find_enclosing_function(node),
-                    file_path=self.current_file
+                    call_node=node, function_node=find_enclosing_function(node), file_path=self.current_file
                 )
                 self.method_usages[method_identifier].append(call_site_info)
         self.generic_visit(node)
@@ -220,18 +216,18 @@ def main():
         "--root-directory",
         type=str,
         required=True,
-        help="The root directory of the project (e.g., '/path/to/project')."
+        help="The root directory of the project (e.g., '/path/to/project').",
     )
     parser.add_argument(
         "--file-path",
         type=str,
         required=True,
-        help="The file path to analyze (e.g., '/path/to/project/api/spam/logic/spam_prevention.py')."
+        help="The file path to analyze (e.g., '/path/to/project/api/spam/logic/spam_prevention.py').",
     )
-    
+
     args = parser.parse_args()
 
-     # Use the parsed arguments
+    # Use the parsed arguments
     root_directory = args.root_directory
     file_path = args.file_path
     result = collect_method_usages(root_directory, file_path)
