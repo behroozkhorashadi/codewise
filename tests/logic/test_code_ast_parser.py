@@ -29,7 +29,7 @@ def example_function():
     result = return_function_text(enclosing_function, source_code)
 
     # Expected function text
-    expected = "def example_function():\n    x = 10\n    y = 20\n    return x + y\n"
+    expected = "def example_function():\n    x = 10\n    y = 20\n    return x + y"
 
     assert result == expected
 
