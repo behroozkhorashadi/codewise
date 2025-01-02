@@ -1,6 +1,7 @@
 import openai
 
 # Set your OpenAI API key here
+#read api key to read from environment variable
 openai.api_key = "YOUR_API_KEY"
 
 def get_method_ratings(prompt: str, model="gpt-4") -> str:

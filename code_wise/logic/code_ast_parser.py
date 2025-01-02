@@ -2,6 +2,7 @@ import ast
 from dataclasses import dataclass
 import os
 import random
+import argparse
 from typing import NamedTuple, Optional, Dict, List, Tuple
 
 
@@ -209,9 +210,32 @@ def collect_method_usages(root_dir: str, file_path: str) -> Dict[MethodPointer, 
 
 
 def main():
-    result = collect_method_usages(
-        "/Users/behrooz/Work/recall-api", "/Users/behrooz/Work/recall-api/api/spam/logic/spam_prevention.py"
+    # result = collect_method_usages(
+    #     #use argparse here
+    #     "/Users/behrooz/Work/recall-api", "/Users/behrooz/Work/recall-api/api/spam/logic/spam_prevention.py"
+    # )
+
+    parser = argparse.ArgumentParser(description="Collect method usages in a given project directory and file.")
+    parser.add_argument(
+        "--root-directory",
+        type=str,
+        required=True,
+        help="The root directory of the project (e.g., '/path/to/project')."
     )
+    parser.add_argument(
+        "--file-path",
+        type=str,
+        required=True,
+        help="The file path to analyze (e.g., '/path/to/project/api/spam/logic/spam_prevention.py')."
+    )
+    
+    args = parser.parse_args()
+
+     # Use the parsed arguments
+    root_directory = args.root_directory
+    file_path = args.file_path
+    result = collect_method_usages(root_directory, file_path)
+
     for method_pointer, call_site_infos in result.items():
         print("******* Function Definition Start ***********")
         print_enclosing_function_definition_from_file(method_pointer.function_node, method_pointer.file_path)
