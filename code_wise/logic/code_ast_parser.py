@@ -22,15 +22,15 @@ class CallSiteInfo(NamedTuple):
     function_node: ast.FunctionDef
     file_path: str
 
-    def find_enclosing_function(call_node: ast.Call) -> Optional[ast.FunctionDef]:
-        # Traverse up the tree until we find a FunctionDef node
-        current_node = call_node
-        while current_node:
-            if isinstance(current_node, ast.FunctionDef):
-                return current_node
-            current_node = current_node.parent  # Move to the parent node
-        print(f"Returning none for call node {call_node}")
-        return None  # Return None if no enclosing function is found
+def find_enclosing_function(call_node: ast.Call) -> Optional[ast.FunctionDef]:
+    # Traverse up the tree until we find a FunctionDef node
+    current_node = call_node
+    while current_node:
+        if isinstance(current_node, ast.FunctionDef):
+            return current_node
+        current_node = current_node.parent  # Move to the parent node
+    print(f"Returning none for call node {call_node}")
+    return None  # Return None if no enclosing function is found
 
 
 def set_parent_pointers(node: ast.Module, parent: ast.Module = None):
@@ -206,21 +206,21 @@ def collect_method_usages(root_dir: str, file_path: str) -> Dict[MethodPointer, 
 
 
 
+
 def parse_arguments() -> argparse.Namespace:
     """Parses command-line arguments."""
     parser = argparse.ArgumentParser(
         description="Collect method usages in a given project directory and file."
     )
+    # Define positional arguments
     parser.add_argument(
-        "--root-directory",
+        "root_directory",
         type=str,
-        required=True,
         help="The root directory of the project (e.g., '/path/to/project').",
     )
     parser.add_argument(
-        "--file-path",
+        "file_path",
         type=str,
-        required=True,
         help="The file path to analyze (e.g., '/path/to/project/api/spam/logic/spam_prevention.py').",
     )
     return parser.parse_args()
