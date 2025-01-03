@@ -45,8 +45,8 @@ def test_parse_arguments_valid():
     """Test that parse_arguments correctly parses valid input arguments."""
     test_args = [
         "script_name",
-        "--root-directory", "/Users/behrooz/Work/recall-api",
-        "--file-path", "/Users/behrooz/Work/recall-api/api/spam/logic/spam_prevention.py",
+        "/Users/behrooz/Work/recall-api",
+        "/Users/behrooz/Work/recall-api/api/spam/logic/spam_prevention.py",
     ]
 
     # Temporarily replace sys.argv
