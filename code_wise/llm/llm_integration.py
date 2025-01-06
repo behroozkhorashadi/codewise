@@ -1,8 +1,12 @@
 import openai
+from dotenv import load_dotenv
+import os
 
-# Set your OpenAI API key here
-#read api key to read from environment variable
-openai.api_key = "YOUR_API_KEY"
+# Load environment variables from the .env file
+load_dotenv()
+
+# Set your OpenAI API key from the environment variable
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def get_method_ratings(prompt: str, model="gpt-4") -> str:
     """
