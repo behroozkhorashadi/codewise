@@ -8,7 +8,7 @@ load_dotenv()
 # Set your OpenAI API key from the environment variable
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-def get_method_ratings(prompt: str, model="gpt-4") -> str:
+def get_method_ratings(prompt: str, model="gpt-3.5-turbo") -> str:
     """
     Calls the OpenAI API with a prompt and returns the response.
     
@@ -20,19 +20,23 @@ def get_method_ratings(prompt: str, model="gpt-4") -> str:
     - str: The response from the OpenAI API.
     """
     try:
-        response = openai.ChatCompletion.create(
+        # Call the OpenAI ChatCompletion API
+        response = openai.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": "You are an assistant helping to rate Python code quality."},
+                {"role": "system", "content": "You are an expert at evaluating Python code and providing feedback."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=10000,
-            temperature=0.2  # Low temperature for consistent, focused responses
+            temperature=0.2 
         )
         
-        # Extract the response content
-        return response['choices'][0]['message']['content'].strip()
+        # Extract and return the assistant's response
+        content = response.choices[0].message.content
+        if content is None:
+            return "The response content is empty or invalid."
+        return content
     
-    except openai.error.OpenAIError as e:
-        print(f"Error: {e}")
-        return None
+    except openai.OpenAIError as e:
+        # Handle API errors gracefully
+        return f"An error occurred: {str(e)}"
