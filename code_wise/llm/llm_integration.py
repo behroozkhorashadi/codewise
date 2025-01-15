@@ -8,7 +8,7 @@ load_dotenv()
 # Set your OpenAI API key from the environment variable
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-def get_method_ratings(prompt: str, model="gpt-3.5-turbo") -> str:
+def get_method_ratings(prompt: str, model="gpt-4") -> str:
     """
     Calls the OpenAI API with a prompt and returns the response.
     
@@ -27,7 +27,7 @@ def get_method_ratings(prompt: str, model="gpt-3.5-turbo") -> str:
                 {"role": "system", "content": "You are an expert at evaluating Python code and providing feedback."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=10000,
+            max_tokens=1000,
             temperature=0.2 
         )
         
