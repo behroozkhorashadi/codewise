@@ -99,30 +99,7 @@ def main():  # sourcery skip: extract-duplicate-method
 
     # Start the GUI event loop
     app.mainloop()
-    # args = parse_arguments()
-    # print(f"Root Directory: {args.root_directory}, File Path: {args.file_path}")
-
-
-    # # Use the parsed arguments
-    # root_directory = args.root_directory
-    # file_path = args.file_path
-    # result = collect_method_usages(root_directory, file_path)
-    # function_def = ''
-    # openai_prompt = ''
-    # usage_examples = ''
-
-    # for method_pointer, call_site_infos in result.items():
-    #     function_def = get_method_body(method_pointer.function_node, method_pointer.file_path)
-
-    #     for call_site_info in call_site_infos:
-    #         usage_examples += f'{get_method_body(call_site_info.function_node, call_site_info.file_path)}/n'
-            
-    #     openai_prompt = generate_code_evaluation_prompt(function_def, usage_examples)
-    #     print(get_method_ratings(openai_prompt))
-    #     break
       
-
-
 if __name__ == "__main__":
     main()
 
