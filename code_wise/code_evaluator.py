@@ -1,15 +1,10 @@
-
-
 import argparse
-
 import tkinter as tk
-from tkinter import messagebox
-print("tkinter is installed and ready to use")
+from tkinter import messagebox, filedialog
+import os
 
 from logic.code_ast_parser import collect_method_usages, print_enclosing_function_definition_from_file, get_method_body
-
 from llm.code_eval_prompt import generate_code_evaluation_prompt
-
 from llm.llm_integration import get_method_ratings
 
 def evaluate_code():
@@ -20,18 +15,23 @@ def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Collect method usages in a given project directory and file."
     )
-    # Define positional arguments
-    parser.add_argument(
-        "root_directory",
-        type=str,
-        help="The root directory of the project (e.g., '/path/to/project').",
-    )
-    parser.add_argument(
-        "file_path",
-        type=str,
-        help="The file path to analyze (e.g., '/path/to/project/api/spam/logic/spam_prevention.py').",
-    )
+    parser.add_argument("root_directory", type=str, help="The root directory of the project.")
+    parser.add_argument("file_path", type=str, help="The file path to analyze.")
     return parser.parse_args()
+
+def select_root_directory():
+    """Opens a file dialog to select the root directory."""
+    selected_directory = filedialog.askdirectory()
+    if selected_directory:
+        root_dir_entry.delete(0, tk.END)
+        root_dir_entry.insert(0, selected_directory)
+
+def select_file():
+    """Opens a file dialog to select the file path."""
+    selected_file = filedialog.askopenfilename()
+    if selected_file:
+        file_path_entry.delete(0, tk.END)
+        file_path_entry.insert(0, selected_file)
 
 def on_submit():
     """Callback to handle submission of inputs from the GUI."""
@@ -42,11 +42,9 @@ def on_submit():
         messagebox.showerror("Input Error", "Both fields must be filled out!")
         return
 
-    # Clear the output box
     output_text.delete("1.0", tk.END)
 
     try:
-        # Core logic
         result = collect_method_usages(root_directory, file_path)
         function_def = ''
         openai_prompt = ''
@@ -54,52 +52,57 @@ def on_submit():
 
         for method_pointer, call_site_infos in result.items():
             function_def = get_method_body(method_pointer.function_node, method_pointer.file_path)
-
             for call_site_info in call_site_infos:
                 usage_examples += f'{get_method_body(call_site_info.function_node, call_site_info.file_path)}\n'
-
+            
             openai_prompt = generate_code_evaluation_prompt(function_def, usage_examples)
-            api_response = get_method_ratings(openai_prompt)  # API call simulation
+            api_response = get_method_ratings(openai_prompt)
             output_text.insert(tk.END, f"Response:\n{api_response}\n")
-            break  # Stop after the first result for demonstration
+            output_text.yview(tk.END)  # Scroll to the end of response
+            break
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
         return
 
     messagebox.showinfo("Success", "Process completed successfully!")
 
-def main():  # sourcery skip: extract-duplicate-method
+def main():
     app = tk.Tk()
     app.title("Codewise")
-    app.geometry("600x400")
+    app.geometry("800x500")
+    app.configure(bg="#2c3e50")
+    app.columnconfigure(0, weight=1)
+    app.rowconfigure(6, weight=1)
 
-    # Root directory label and entry
-    tk.Label(app, text="Root Directory:").pack(pady=(10, 0))
-    
-    global root_dir_entry
-    root_dir_entry = tk.Entry(app, width=70)
-    root_dir_entry.pack(pady=(0, 10))
+    global root_dir_entry, file_path_entry, output_text
 
-    # File path label and entry
-    tk.Label(app, text="File Path:").pack(pady=(10, 0))
-    global file_path_entry
-    file_path_entry = tk.Entry(app, width=70)
-    file_path_entry.pack(pady=(0, 10))
+    tk.Label(app, text="Root Directory:", fg="white", bg="#2c3e50", font=("Arial", 12, "bold")).pack(pady=(10, 0))
+    root_frame = tk.Frame(app, bg="#2c3e50")
+    root_frame.pack(fill=tk.X, padx=10)
+    root_dir_entry = tk.Entry(root_frame, width=60, font=("Arial", 12))
+    root_dir_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5), pady=5)
+    tk.Button(root_frame, text="Browse", command=select_root_directory, bg="#16a085", fg="black", font=("Arial", 10, "bold"), relief=tk.FLAT).pack(side=tk.RIGHT)
 
-    # Submit button
-    tk.Button(app, text="Submit", command=on_submit).pack(pady=(10, 0))
+    tk.Label(app, text="File Path:", fg="white", bg="#2c3e50", font=("Arial", 12, "bold")).pack(pady=(10, 0))
+    file_frame = tk.Frame(app, bg="#2c3e50")
+    file_frame.pack(fill=tk.X, padx=10)
+    file_path_entry = tk.Entry(file_frame, width=60, font=("Arial", 12))
+    file_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5), pady=5)
+    tk.Button(file_frame, text="Browse", command=select_file, bg="#16a085", fg="black", font=("Arial", 10, "bold"), relief=tk.FLAT).pack(side=tk.RIGHT)
 
-    # Output label
-    tk.Label(app, text="API Response:").pack(pady=(10, 0))
+    tk.Button(app, text="Submit", command=on_submit, bg="#e74c3c", fg="black", font=("Arial", 12, "bold"), relief=tk.FLAT, width=20, height=2).pack(pady=(20, 10))
 
-    # Output text box
-    global output_text
-    output_text = tk.Text(app, wrap=tk.WORD, height=10, width=70)
-    output_text.pack(pady=(0, 10))
+    tk.Label(app, text="API Response:", fg="white", bg="#2c3e50", font=("Arial", 12, "bold")).pack(pady=(10, 0))
+    text_frame = tk.Frame(app)
+    text_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+    output_text = tk.Text(text_frame, wrap=tk.WORD, font=("Arial", 12), bg="#ecf0f1")
+    output_text.pack(fill=tk.BOTH, expand=True)
 
-    # Start the GUI event loop
+    scrollbar = tk.Scrollbar(text_frame, command=output_text.yview)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    output_text.config(yscrollcommand=scrollbar.set)
+
     app.mainloop()
-      
+
 if __name__ == "__main__":
     main()
-
