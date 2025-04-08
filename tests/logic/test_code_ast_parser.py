@@ -2,10 +2,9 @@ import sys
 import pytest
 
 import ast
-import pytest
-from typing import Optional
 
-from code_wise.logic.code_ast_parser import parse_arguments, return_function_text
+from code_wise.code_evaluator import parse_arguments
+from code_wise.logic.code_ast_parser import return_function_text
 
 
 def test_return_function_text():

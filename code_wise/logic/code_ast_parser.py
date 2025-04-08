@@ -1,9 +1,7 @@
 import ast
-from dataclasses import dataclass
 import os
 import random
-import argparse
-from typing import NamedTuple, Optional, Dict, List, Tuple
+from typing import NamedTuple, Optional, Dict, List
 
 
 class MethodIdentifier(NamedTuple):
