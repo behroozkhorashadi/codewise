@@ -23,8 +23,17 @@ jobs:
         with:
           python-version-file: ".python-version"
 
-      - name: Run Python Tests
+      - name: Create virtual environment with uv
+        run: uv venv
+      - name: Install all dependencies via uv
         run: |
+          source .venv/bin/activate
+          uv pip install .
+          uv pip install . --group dev
+      
+      - name: "Run Tests"
+        run: |
+          source .venv/bin/activate
           pytest --cov=code_wise --cov-report=term-missing
 
   lint:
@@ -42,11 +51,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version-file: ".python-version"
-
+      - name: Create virtual environment with uv
+        run: uv venv
       - name: Install Ruff via uv
         run: |
+          source .venv/bin/activate
           uv pip install ruff
 
       - name: Run Ruff Linter
         run: |
+          source .venv/bin/activate  
           ruff check . --fix
