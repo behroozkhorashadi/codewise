@@ -11,4 +11,5 @@ Clone the repo and cd into the directory.
   $ uv venv
   $ source .venv/bin/activate
   $ uv pip install .
+  # uv pip install . --group dev
 ```
