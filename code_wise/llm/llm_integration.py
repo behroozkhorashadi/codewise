@@ -1,6 +1,7 @@
 import openai
 from dotenv import load_dotenv
 import os
+from llm.llm_local import local_model_request
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -19,6 +20,10 @@ def get_method_ratings(prompt: str, model="gpt-4") -> str:
     Returns:
     - str: The response from the OpenAI API.
     """
+    if openai.api_key is None:
+        # Try local model
+	    return local_model_request(prompt)    
+    
     try:
         # Call the OpenAI ChatCompletion API
         response = openai.chat.completions.create(
