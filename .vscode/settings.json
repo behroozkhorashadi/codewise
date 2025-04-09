@@ -1,0 +1,21 @@
+{
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/.venv": true,
+    "**/build": true,
+    "**/code_wise.egg-info": true
+  },
+  "search.exclude": {
+    "**/build": true,
+    "**/.venv": true
+  },
+  "files.watcherExclude": {
+    "**/build/**": true,
+    "**/.venv/**": true
+  },
+  "python.analysis.exclude": ["**/build", "**/.venv"],
+  "python.analysis.autoSearchPaths": false,
+  "cSpell.words": ["codewise"]
+}
