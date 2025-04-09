@@ -1,9 +1,9 @@
 import sys
+from code_wise.utils.parse_helper import parse_arguments
 import pytest
 
 import ast
 
-from code_wise.code_evaluator import parse_arguments
 from code_wise.logic.code_ast_parser import return_function_text
 
 
