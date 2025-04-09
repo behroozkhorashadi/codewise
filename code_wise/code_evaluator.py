@@ -1,11 +1,15 @@
 import argparse
-import tkinter as tk
-from tkinter import messagebox, filedialog
-import os
+try: # conditionally import so tests don't fail
+    import tkinter as tk
+    from tkinter import messagebox, filedialog
+except ImportError:
+    tk = None
+    messagebox = None
+    filedialog = None
 
-from logic.code_ast_parser import collect_method_usages, print_enclosing_function_definition_from_file, get_method_body
-from llm.code_eval_prompt import generate_code_evaluation_prompt
-from llm.llm_integration import get_method_ratings
+from code_wise.logic.code_ast_parser import collect_method_usages, get_method_body
+from code_wise.llm.code_eval_prompt import generate_code_evaluation_prompt
+from code_wise.llm.llm_integration import get_method_ratings
 
 def evaluate_code():
     pass
