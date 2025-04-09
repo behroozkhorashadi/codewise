@@ -1,10 +1,19 @@
 from PySide6.QtWidgets import (
-    QWidget, QLabel, QPushButton, QLineEdit, QTextEdit, QVBoxLayout,
-    QHBoxLayout, QFileDialog, QMessageBox
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
+
 from code_wise.llm.code_eval_prompt import generate_code_evaluation_prompt
 from code_wise.llm.llm_integration import get_method_ratings
 from code_wise.logic.code_ast_parser import collect_method_usages, get_method_body
+
 
 class CodewiseApp(QWidget):
     def __init__(self):

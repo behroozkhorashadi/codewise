@@ -1,6 +1,9 @@
-from code_wise.codewise_gui.codewise_ui_utils import CodewiseApp
-from PySide6.QtWidgets import QApplication
 import sys
+
+from PySide6.QtWidgets import QApplication
+
+from code_wise.codewise_gui.codewise_ui_utils import CodewiseApp
+
 
 def main():
     app = QApplication(sys.argv)

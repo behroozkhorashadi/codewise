@@ -1,10 +1,10 @@
+import ast
 import sys
-from code_wise.utils.parse_helper import parse_arguments
+
 import pytest
 
-import ast
-
 from code_wise.logic.code_ast_parser import return_function_text
+from code_wise.utils.parse_helper import parse_arguments
 
 
 def test_return_function_text():
@@ -56,11 +56,13 @@ def test_parse_arguments_valid():
     assert args.root_directory == "/Users/behrooz/Work/recall-api"
     assert args.file_path == "/Users/behrooz/Work/recall-api/api/spam/logic/spam_prevention.py"
 
+
 def test_parse_arguments_missing_required_args():
     """Test that parse_arguments raises a SystemExit error when required arguments are missing."""
     test_args = [
         "script_name",
-        "--root-directory", "/Users/behrooz/Work/recall-api",
+        "--root-directory",
+        "/Users/behrooz/Work/recall-api",
         # Missing --file-path argument
     ]
 
@@ -70,12 +72,10 @@ def test_parse_arguments_missing_required_args():
     with pytest.raises(SystemExit):  # argparse exits the program if arguments are missing
         parse_arguments()
 
+
 def test_parse_arguments_invalid_args():
     """Test that parse_arguments raises a SystemExit error for invalid arguments."""
-    test_args = [
-        "script_name",
-        "--invalid-arg", "some_value"
-    ]
+    test_args = ["script_name", "--invalid-arg", "some_value"]
 
     # Temporarily replace sys.argv
     sys.argv = test_args
