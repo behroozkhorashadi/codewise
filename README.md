@@ -2,7 +2,8 @@
 
 ## Project Dependencies
 
-`Codewise` uses UV for package dependency management. Quick uv install instructions `curl -Ls https://astral.sh/uv/install.sh | sh`
+`Codewise` uses UV for package dependency management. Quick uv install instructions `curl -Ls https://astral.sh/uv/install.sh | sh`  
+Remember to open a new tab once you run curl so that uv shows up in your path
 
 ## Project Setup
 
@@ -19,9 +20,9 @@ Clone the repo and cd into the directory.
 ```
 
 ## Run Project
+Put your OpenAPI api key in `.env_template` and rename it to `.env`  
 
 From inside your virtual environment
-
 ```console
   $ python code_evaluator.py
 ```
@@ -40,4 +41,8 @@ Note: black and isort are built into the pre-commit hooks so they will run autom
 From the root directory run:
 ```console
   $ pytest
+```
+For coverage use
+```console
+pytest --cov=code_wise --cov-report=term-missing
 ```
