@@ -2,6 +2,10 @@ venv/
 .coverage
 **/__pycache__/**
 .env
-.vscode
 *.egg-info/
 build/
+# Ignore everything in .vscode
+.vscode/*
+# But NOT the folder itself and NOT settings.json (or launch.json if needed)
+!.vscode/
+!.vscode/settings.json
