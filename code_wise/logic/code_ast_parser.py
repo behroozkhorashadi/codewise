@@ -1,7 +1,7 @@
 import ast
 import os
 import random
-from typing import NamedTuple, Optional, Dict, List
+from typing import Dict, List, NamedTuple, Optional
 
 
 class MethodIdentifier(NamedTuple):
@@ -19,6 +19,7 @@ class CallSiteInfo(NamedTuple):
     call_node: ast.Call
     function_node: ast.FunctionDef
     file_path: str
+
 
 def find_enclosing_function(call_node: ast.Call) -> Optional[ast.FunctionDef]:
     # Traverse up the tree until we find a FunctionDef node
@@ -148,7 +149,9 @@ class MethodUsageCollector(ast.NodeVisitor):
 
             if len(self.method_usages[method_identifier]) < 10:
                 call_site_info = CallSiteInfo(
-                    call_node=node, function_node=find_enclosing_function(node), file_path=self.current_file
+                    call_node=node,
+                    function_node=find_enclosing_function(node),
+                    file_path=self.current_file,
                 )
                 self.method_usages[method_identifier].append(call_site_info)
         self.generic_visit(node)
@@ -201,5 +204,3 @@ def collect_method_usages(root_dir: str, file_path: str) -> Dict[MethodPointer, 
     collector.parse_target_file()  # Collect definitions in target file
     collector.parse_repo_files()  # Find usage of each method in the repo
     return collector.get_usages()
-
-

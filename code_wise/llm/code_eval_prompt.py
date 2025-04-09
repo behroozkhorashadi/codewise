@@ -40,6 +40,7 @@ prompt = """
     Please provide a detailed evaluation of the method above based on the criteria and format outlined.
     """
 
+
 def generate_code_evaluation_prompt(method_body: str, usage_example: str = "") -> str:
     """
     Generate a code evaluation prompt by injecting the method definition and optional usage example.
@@ -51,10 +52,9 @@ def generate_code_evaluation_prompt(method_body: str, usage_example: str = "") -
     Returns:
         str: The full prompt with the injected method and usage example.
     """
-    
 
     # Inject method and usage example dynamically
     return prompt.format(
         method_body=method_body.strip(),
-        usage_example=f"Usage Example:\n{usage_example.strip()}" if usage_example else ""
+        usage_example=(f"Usage Example:\n{usage_example.strip()}" if usage_example else ""),
     )
