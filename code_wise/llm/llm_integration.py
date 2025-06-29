@@ -3,8 +3,6 @@ import os
 import openai
 from dotenv import load_dotenv
 
-from code_wise.llm.llm_local import local_model_request
-
 # Load environment variables from the .env file
 load_dotenv()
 
