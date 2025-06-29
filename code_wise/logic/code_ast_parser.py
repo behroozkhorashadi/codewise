@@ -57,7 +57,8 @@ def return_function_text(enclosing_function: ast.FunctionDef, source_code: str) 
 def get_method_body(node: ast.FunctionDef, file_path: str) -> str:
     with open(file_path, "r") as file:
         source_code = file.read()
-        return ast.get_source_segment(source_code, node)
+        result = ast.get_source_segment(source_code, node)
+        return result if result else ""
 
 
 class MethodUsageCollector(ast.NodeVisitor):
@@ -87,14 +88,17 @@ class MethodUsageCollector(ast.NodeVisitor):
             full_import_path = f"{module}.{alias.name}" if module else alias.name
             self.import_map[name] = full_import_path
 
-    def collect_method_definitions(self, node: ast.Module) -> None:
+    def collect_method_definitions(self, node) -> None:
+        # Check if the current node is a function definition
         if isinstance(node, ast.FunctionDef):
             module_name = self.current_module_name
-            print(node.name)
+            print(f"Found function: {node.name}")
             self.method_to_module[node.name] = module_name
             method_identifier = MethodIdentifier(module_name, method_name=str(node.name))
             self.method_definitions[method_identifier] = node
             self.method_file_path_mapping[method_identifier] = node.source_file
+
+        # Recursively process all child nodes
         for child_node in ast.iter_child_nodes(node):
             child_node.source_file = node.source_file
             self.collect_method_definitions(child_node)
@@ -148,33 +152,56 @@ class MethodUsageCollector(ast.NodeVisitor):
                 self.method_usages[method_identifier] = []
 
             if len(self.method_usages[method_identifier]) < 10:
-                call_site_info = CallSiteInfo(
-                    call_node=node,
-                    function_node=find_enclosing_function(node),
-                    file_path=self.current_file,
-                )
-                self.method_usages[method_identifier].append(call_site_info)
+                enclosing_function = find_enclosing_function(node)
+                if enclosing_function:  # Only add if we found an enclosing function
+                    call_site_info = CallSiteInfo(
+                        call_node=node,
+                        function_node=enclosing_function,
+                        file_path=self.current_file,
+                    )
+                    self.method_usages[method_identifier].append(call_site_info)
         self.generic_visit(node)
 
     def parse_target_file(self):
         self.set_current_file(self.target_file)
-        with open(self.target_file, "r") as file:
-            node = ast.parse(file.read())
-            set_parent_pointers(node)
-            node.source_file = self.target_file
-            self.collect_method_definitions(node)
+        try:
+            with open(self.target_file, "r") as file:
+                content = file.read()
+                node = ast.parse(content)
+                set_parent_pointers(node)
+                node.source_file = self.target_file
+                self.collect_method_definitions(node)
+        except SyntaxError as e:
+            print(f"Syntax error in {self.target_file}: {e}")
+            raise
+        except Exception as e:
+            print(f"Error parsing {self.target_file}: {e}")
+            raise
 
     def parse_repo_files(self):
-        for subdir, _, files in os.walk(self.root_directory):
+        for subdir, dirs, files in os.walk(self.root_directory):
+            # Skip virtual environment and other directories that shouldn't be parsed
+            dirs[:] = [
+                d for d in dirs if d not in ['.venv', 'venv', '__pycache__', '.git', 'node_modules', '.pytest_cache']
+            ]
+
             for file in files:
                 if file.endswith(".py") and not file.startswith("test_"):
                     file_path = os.path.join(subdir, file)
-                    self.set_current_file(file_path)
-                    with open(file_path, "r") as f:
-                        node = ast.parse(f.read())
-                        set_parent_pointers(node)
-                        node.source_file = file_path
-                        self.visit(node)
+                    try:
+                        self.set_current_file(file_path)
+                        with open(file_path, "r") as f:
+                            content = f.read()
+                            node = ast.parse(content)
+                            set_parent_pointers(node)
+                            node.source_file = file_path
+                            self.visit(node)
+                    except SyntaxError as e:
+                        print(f"Syntax error in {file_path}: {e}")
+                        continue  # Skip this file and continue with others
+                    except Exception as e:
+                        print(f"Error parsing {file_path}: {e}")
+                        continue  # Skip this file and continue with others
 
     def set_current_file(self, file_path: str) -> None:
         self.current_file = file_path
