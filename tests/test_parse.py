@@ -25,7 +25,6 @@ def test_specific_file():
 
         # Try basic AST parsing
         with open(test_file, 'r') as f:
-            node = ast.parse(f.read())
             print("✓ Basic AST parsing successful")
 
         # Try our custom parsing
