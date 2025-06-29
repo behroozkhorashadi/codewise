@@ -1,3 +1,5 @@
+from PySide6.QtCore import Qt, QThread, QThreadPool, QTimer, Signal
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -5,6 +7,8 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QScrollArea,
+    QSplitter,
     QTextEdit,
     QVBoxLayout,
     QWidget,
@@ -15,58 +19,224 @@ from code_wise.llm.llm_integration import get_method_ratings
 from code_wise.logic.code_ast_parser import collect_method_usages, get_method_body
 
 
+class AnalysisWorker(QThread):
+    """Worker thread for performing code analysis"""
+
+    progress = Signal(str)
+    api_response = Signal(str)
+    finished = Signal(str)
+    error = Signal(str)
+
+    def __init__(self, root_directory, file_path):
+        super().__init__()
+        self.root_directory = root_directory
+        self.file_path = file_path
+
+    def run(self):
+        try:
+            self.progress.emit("Analyzing file...")
+            result = collect_method_usages(self.root_directory, self.file_path)
+
+            self.progress.emit(f"Found {len(result)} methods with usages")
+
+            if not result:
+                self.finished.emit(
+                    "No methods with usages found. This could mean:\n1. The file doesn't contain any function definitions\n2. The functions in the file are not called anywhere in the codebase\n3. There's an issue with the AST parsing"
+                )
+                return
+
+            function_def = ""
+            openai_prompt = ""
+            usage_examples = ""
+
+            for method_pointer, call_site_infos in result.items():
+                self.progress.emit(f"Processing method: {method_pointer.method_id.method_name}")
+                self.progress.emit(f"Found {len(call_site_infos)} usage examples")
+
+                function_def = get_method_body(method_pointer.function_node, method_pointer.file_path)
+                self.progress.emit(f"Function definition length: {len(function_def)} characters")
+
+                for call_site_info in call_site_infos:
+                    usage_examples += f"{get_method_body(call_site_info.function_node, call_site_info.file_path)}\n"
+
+                self.progress.emit(f"Usage examples length: {len(usage_examples)} characters")
+
+                openai_prompt = generate_code_evaluation_prompt(function_def, usage_examples)
+                self.progress.emit(f"Generated prompt length: {len(openai_prompt)} characters")
+
+                self.progress.emit("Calling LLM API...")
+                api_response = get_method_ratings(openai_prompt)
+                self.api_response.emit(api_response)
+
+                # Only process the first method for now
+                break
+
+            self.finished.emit("Analysis completed successfully!")
+
+        except Exception as e:
+            self.error.emit(f"Error occurred: {str(e)}")
+
+
 class CodewiseApp(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Codewise")
         self.setGeometry(100, 100, 800, 500)
-        self.setStyleSheet("background-color: #2c3e50;")
+        self.setStyleSheet(
+            """
+            QWidget {
+                background-color: #f8f9fa;
+                color: #212529;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            }
+            QLineEdit {
+                background-color: white;
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 8px;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border: 2px solid #007bff;
+            }
+            QPushButton {
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-weight: 500;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #0056b3;
+            }
+            QPushButton:pressed {
+                background-color: #004085;
+            }
+            QPushButton:disabled {
+                background-color: #6c757d;
+                color: #adb5bd;
+            }
+            QTextEdit {
+                background-color: white;
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                padding: 8px;
+                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+                font-size: 12px;
+            }
+            QLabel {
+                color: #495057;
+                font-weight: 600;
+                font-size: 14px;
+                margin-bottom: 4px;
+            }
+        """
+        )
 
         self.root_dir_entry = QLineEdit()
         self.file_path_entry = QLineEdit()
         self.output_text = QTextEdit()
+        self.submit_btn = None  # Will be set in init_ui
+        self.progress_label = None  # Will be set in init_ui
+        self.worker = None  # Keep reference to worker
 
         self.init_ui()
 
     def init_ui(self):
-        layout = QVBoxLayout()
+        main_layout = QVBoxLayout()
+
+        # Input section
+        input_layout = QVBoxLayout()
 
         # Root Directory
-        layout.addWidget(self._styled_label("Root Directory:"))
+        input_layout.addWidget(self._styled_label("Root Directory:"))
         root_layout = QHBoxLayout()
         root_layout.addWidget(self.root_dir_entry)
         browse_root_btn = QPushButton("Browse")
         browse_root_btn.clicked.connect(self.select_root_directory)
         root_layout.addWidget(browse_root_btn)
-        layout.addLayout(root_layout)
+        input_layout.addLayout(root_layout)
 
         # File Path
-        layout.addWidget(self._styled_label("File Path:"))
+        input_layout.addWidget(self._styled_label("File Path:"))
         file_layout = QHBoxLayout()
         file_layout.addWidget(self.file_path_entry)
         browse_file_btn = QPushButton("Browse")
         browse_file_btn.clicked.connect(self.select_file)
         file_layout.addWidget(browse_file_btn)
-        layout.addLayout(file_layout)
+        input_layout.addLayout(file_layout)
 
         # Submit button
-        submit_btn = QPushButton("Submit")
-        submit_btn.setFixedHeight(40)
-        submit_btn.clicked.connect(self.on_submit)
-        submit_btn.setStyleSheet("background-color: #e74c3c; font-weight: bold;")
-        layout.addWidget(submit_btn)
+        self.submit_btn = QPushButton("Submit")
+        self.submit_btn.setFixedHeight(40)
+        self.submit_btn.clicked.connect(self.on_submit)
+        self.submit_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #28a745;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-weight: 600;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #218838;
+            }
+            QPushButton:pressed {
+                background-color: #1e7e34;
+            }
+        """
+        )
+        self.submit_btn.setEnabled(True)
+        input_layout.addWidget(self.submit_btn)
 
-        # Output label and text area
-        layout.addWidget(self._styled_label("API Response:"))
+        # Progress label
+        self.progress_label = QLabel("Status: Idle")
+        input_layout.addWidget(self.progress_label)
+
+        # Add input section to main layout
+        main_layout.addLayout(input_layout)
+
+        # Create splitter for the text areas
+        splitter = QSplitter()
+
+        # Debug/Progress section
+        debug_widget = QWidget()
+        debug_layout = QVBoxLayout(debug_widget)
+        debug_layout.addWidget(self._styled_label("Analysis Progress:"))
+
+        # Make output text area scrollable
         self.output_text.setReadOnly(True)
-        self.output_text.setStyleSheet("background-color: #ecf0f1;")
-        layout.addWidget(self.output_text, stretch=1)
+        self.output_text.setMinimumHeight(150)
+        debug_layout.addWidget(self.output_text)
 
-        self.setLayout(layout)
+        splitter.addWidget(debug_widget)
+
+        # API Response section
+        response_widget = QWidget()
+        response_layout = QVBoxLayout(response_widget)
+        response_layout.addWidget(self._styled_label("API Response:"))
+
+        # Create a separate text area for API response
+        self.api_response_text = QTextEdit()
+        self.api_response_text.setReadOnly(True)
+        self.api_response_text.setMinimumHeight(200)
+        response_layout.addWidget(self.api_response_text)
+
+        splitter.addWidget(response_widget)
+
+        # Set initial splitter proportions (60% debug, 40% response)
+        splitter.setSizes([600, 400])
+
+        main_layout.addWidget(splitter, stretch=1)
+        self.setLayout(main_layout)
 
     def _styled_label(self, text):
         label = QLabel(text)
-        label.setStyleSheet("color: white; font-weight: bold;")
         return label
 
     def select_root_directory(self):
@@ -88,23 +258,42 @@ class CodewiseApp(QWidget):
             return
 
         self.output_text.clear()
+        if self.submit_btn:
+            self.submit_btn.setEnabled(False)
 
         try:
-            result = collect_method_usages(root_directory, file_path)
-            function_def = ""
-            openai_prompt = ""
-            usage_examples = ""
+            # Add debug output
+            self.output_text.append(f"Analyzing file: {file_path}\n")
+            self.output_text.append(f"Root directory: {root_directory}\n")
 
-            for method_pointer, call_site_infos in result.items():
-                function_def = get_method_body(method_pointer.function_node, method_pointer.file_path)
-                for call_site_info in call_site_infos:
-                    usage_examples += f"{get_method_body(call_site_info.function_node, call_site_info.file_path)}\n"
-
-                openai_prompt = generate_code_evaluation_prompt(function_def, usage_examples)
-                api_response = get_method_ratings(openai_prompt)
-                self.output_text.append(f"Response:\n{api_response}\n")
-                break
-
-            QMessageBox.information(self, "Success", "Process completed successfully!")
+            self.worker = AnalysisWorker(root_directory, file_path)
+            self.worker.progress.connect(self.update_progress)
+            self.worker.api_response.connect(self.update_api_response)
+            self.worker.finished.connect(self.on_analysis_finished)
+            self.worker.error.connect(self.on_analysis_error)
+            self.worker.start()
         except Exception as e:
+            self.output_text.append(f"Error occurred: {str(e)}\n")
             QMessageBox.critical(self, "Error", f"An error occurred: {e}")
+            if self.submit_btn:
+                self.submit_btn.setEnabled(True)
+
+    def update_progress(self, message):
+        self.output_text.append(message + "\n")
+        if self.progress_label:
+            self.progress_label.setText(f"Status: {message}")
+
+    def update_api_response(self, api_response):
+        self.api_response_text.setText(api_response)
+
+    def on_analysis_finished(self, message):
+        self.output_text.append(message + "\n")
+        QMessageBox.information(self, "Success", "Process completed successfully!")
+        if self.submit_btn:
+            self.submit_btn.setEnabled(True)
+
+    def on_analysis_error(self, error_message):
+        self.output_text.append(f"Error: {error_message}\n")
+        QMessageBox.critical(self, "Error", error_message)
+        if self.submit_btn:
+            self.submit_btn.setEnabled(True)

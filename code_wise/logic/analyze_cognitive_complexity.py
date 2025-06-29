@@ -2,6 +2,7 @@ import ast
 import os
 import sys
 from typing import List
+
 from cognitive_complexity.api import get_cognitive_complexity
 
 

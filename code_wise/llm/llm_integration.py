@@ -3,8 +3,6 @@ import os
 import openai
 from dotenv import load_dotenv
 
-from code_wise.llm.llm_local import local_model_request
-
 # Load environment variables from the .env file
 load_dotenv()
 
@@ -24,8 +22,19 @@ def get_method_ratings(prompt: str, model="gpt-4") -> str:
     - str: The response from the OpenAI API.
     """
     if openai.api_key is None:
-        # Try local model
-        return local_model_request(prompt)
+        # No OpenAI API key configured
+        return """No OpenAI API key configured. 
+
+To use this application, you need to:
+
+1. Get an OpenAI API key from https://platform.openai.com/api-keys
+2. Create a .env file in the project root with:
+   OPENAI_API_KEY=your_api_key_here
+
+Alternatively, you can set the environment variable:
+export OPENAI_API_KEY=your_api_key_here
+
+The local model server at 130.86.176.68:9002 is not available."""
 
     try:
         # Call the OpenAI ChatCompletion API
@@ -50,4 +59,4 @@ def get_method_ratings(prompt: str, model="gpt-4") -> str:
 
     except openai.OpenAIError as e:
         # Handle API errors gracefully
-        return f"An error occurred: {str(e)}"
+        return f"OpenAI API error: {str(e)}"
