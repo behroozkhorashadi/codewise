@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-
-import ast
 import os
 import sys
 
