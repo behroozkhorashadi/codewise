@@ -1,5 +1,9 @@
 import math
 import os
+import threading
+import time
+from concurrent.futures import Future, ThreadPoolExecutor
+from typing import Optional
 
 from PySide6.QtCore import Qt, QThread, QThreadPool, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QPainter
@@ -23,6 +27,85 @@ from PySide6.QtWidgets import (
 from code_wise.llm.code_eval_prompt import generate_code_evaluation_prompt
 from code_wise.llm.llm_integration import get_method_ratings
 from code_wise.logic.code_ast_parser import collect_method_usages, get_method_body
+
+
+class CancellableAPICall:
+    """A cancellable API call that runs in a separate thread."""
+
+    def __init__(self):
+        self._executor = ThreadPoolExecutor(max_workers=1)
+        self._current_future: Optional[Future] = None
+        self._cancelled = False
+        self._lock = threading.Lock()
+
+    def call_api(self, prompt: str, model: str = "gpt-4") -> str:
+        """
+        Make a cancellable API call.
+
+        Args:
+            prompt: The prompt to send to the API
+            model: The model to use
+
+        Returns:
+            The API response or error message
+
+        Raises:
+            CancelledError: If the call was cancelled
+        """
+        with self._lock:
+            if self._cancelled:
+                raise CancelledError("API call was cancelled")
+
+            # Submit the API call to the thread pool
+            self._current_future = self._executor.submit(get_method_ratings, prompt, model)
+
+        try:
+            # Wait for the result, checking for cancellation periodically
+            while not self._current_future.done():
+                with self._lock:
+                    if self._cancelled:
+                        self._current_future.cancel()
+                        raise CancelledError("API call was cancelled")
+                time.sleep(0.1)  # Check every 100ms
+
+            # Get the result
+            result = self._current_future.result()
+            with self._lock:
+                if self._cancelled:
+                    raise CancelledError("API call was cancelled")
+                return result
+
+        except Exception as e:
+            with self._lock:
+                if self._cancelled:
+                    raise CancelledError("API call was cancelled")
+                raise e
+        finally:
+            with self._lock:
+                self._current_future = None
+
+    def cancel(self):
+        """Cancel the current API call if one is in progress."""
+        with self._lock:
+            self._cancelled = True
+            if self._current_future and not self._current_future.done():
+                self._current_future.cancel()
+
+    def reset(self):
+        """Reset the cancellation state for the next call."""
+        with self._lock:
+            self._cancelled = False
+            self._current_future = None
+
+    def shutdown(self):
+        """Shutdown the executor."""
+        self._executor.shutdown(wait=False)
+
+
+class CancelledError(Exception):
+    """Exception raised when an API call is cancelled."""
+
+    pass
 
 
 class LoadingSpinner(QWidget):
@@ -123,10 +206,12 @@ class AnalysisWorker(QThread):
         self.file_path = file_path
         self.analysis_mode = analysis_mode
         self._is_cancelled = False
+        self._api_call = CancellableAPICall()
 
     def cancel(self):
         """Cancel the analysis."""
         self._is_cancelled = True
+        self._api_call.cancel()
         self.quit()
         self.wait()
 
@@ -154,7 +239,10 @@ class AnalysisWorker(QThread):
                 self.finished.emit("Analysis completed successfully!")
 
         except Exception as e:
-            self.error.emit(f"Error during analysis: {str(e)}")
+            if not self._is_cancelled:
+                self.error.emit(f"Error during analysis: {str(e)}")
+        finally:
+            self._api_call.shutdown()
 
     def _process_methods(self, result):
         """Process methods for single file analysis."""
@@ -182,7 +270,15 @@ class AnalysisWorker(QThread):
             self.progress.emit("Calling LLM API...")
 
             try:
-                api_response = get_method_ratings(prompt)
+                # Reset API call state for this method
+                self._api_call.reset()
+
+                # Make the cancellable API call
+                api_response = self._api_call.call_api(prompt)
+
+                if self._is_cancelled:
+                    return
+
                 self.progress.emit(f"API call completed for {method_name}")
 
                 all_results.append({"method_name": method_name, "api_response": api_response})
@@ -190,6 +286,9 @@ class AnalysisWorker(QThread):
                 # Emit individual API response for popup
                 self.api_response.emit(f"Analysis for method: {method_name}\n\n{api_response}")
 
+            except CancelledError:
+                self.progress.emit(f"API call cancelled for {method_name}")
+                return
             except Exception as e:
                 self.progress.emit(f"Error calling API for {method_name}: {str(e)}")
 
@@ -240,7 +339,15 @@ class AnalysisWorker(QThread):
                 self.progress.emit("Calling LLM API...")
 
                 try:
-                    api_response = get_method_ratings(prompt)
+                    # Reset API call state for this method
+                    self._api_call.reset()
+
+                    # Make the cancellable API call
+                    api_response = self._api_call.call_api(prompt)
+
+                    if self._is_cancelled:
+                        return
+
                     self.progress.emit(f"API call completed for {method_name}")
 
                     all_results.append(
@@ -255,6 +362,9 @@ class AnalysisWorker(QThread):
                     # Emit individual API response for popup
                     self.api_response.emit(f"Analysis for method: {method_name}\n\n{api_response}")
 
+                except CancelledError:
+                    self.progress.emit(f"API call cancelled for {method_name}")
+                    return
                 except Exception as e:
                     self.progress.emit(f"Error calling API for {method_name}: {str(e)}")
 
@@ -414,7 +524,41 @@ class CodewiseApp(QWidget):
         """
         )
         self.submit_btn.setEnabled(True)
-        input_layout.addWidget(self.submit_btn)
+
+        # Cancel button (initially hidden)
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.setFixedHeight(40)
+        self.cancel_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-weight: 500;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #b52a37;
+            }
+            QPushButton:pressed {
+                background-color: #8a1c28;
+            }
+            QPushButton:disabled {
+                background-color: #e2aeb1;
+                color: #fff0f1;
+            }
+        """
+        )
+        self.cancel_btn.setVisible(False)
+        self.cancel_btn.clicked.connect(self.on_cancel_clicked)
+
+        # Button layout
+        btn_layout = QHBoxLayout()
+        btn_layout.addWidget(self.submit_btn)
+        btn_layout.addWidget(self.cancel_btn)
+        input_layout.addLayout(btn_layout)
 
         # Progress label
         self.progress_label = QLabel("Status: Idle")
@@ -517,8 +661,17 @@ class CodewiseApp(QWidget):
         else:
             file_path = None
 
+        # Reset cancellation state
+        self._cancelled = False
+
+        # Update UI for analysis start
         if self.submit_btn:
             self.submit_btn.setEnabled(False)
+        if self.cancel_btn:
+            self.cancel_btn.setVisible(True)
+            self.cancel_btn.setEnabled(True)
+        if self.progress_label:
+            self.progress_label.setText("Status: Starting...")
 
         # Show spinner and update status
         self.spinner.setVisible(True)
@@ -542,10 +695,7 @@ class CodewiseApp(QWidget):
 
         except Exception as e:
             self.output_text.append(f"Error: {str(e)}\n")
-            if self.submit_btn:
-                self.submit_btn.setEnabled(True)
-            self.spinner.stop_spinning()
-            self.spinner.setVisible(False)
+            self.reset_ui_after_cancel()
 
     def update_progress(self, message):
         self.output_text.append(message + "\n")
@@ -557,26 +707,72 @@ class CodewiseApp(QWidget):
         # Don't stop the spinner here - let it continue for multiple API responses
 
     def on_analysis_finished(self, message):
+        # Only process if not cancelled
+        if hasattr(self, '_cancelled') and self._cancelled:
+            return
         self.output_text.append(message + "\n")
         self.spinner.stop_spinning()
         self.spinner.setVisible(False)
+        if self.cancel_btn:
+            self.cancel_btn.setVisible(False)
+            self.cancel_btn.setEnabled(True)
+        if self.progress_label:
+            self.progress_label.setText("Status: Completed")
         QMessageBox.information(self, "Success", "Process completed successfully!")
         if self.submit_btn:
             self.submit_btn.setEnabled(True)
 
     def on_analysis_error(self, error_message):
+        # Only process if not cancelled
+        if hasattr(self, '_cancelled') and self._cancelled:
+            return
         self.output_text.append(f"Error: {error_message}\n")
         self.spinner.stop_spinning()
         self.spinner.setVisible(False)
+        if self.cancel_btn:
+            self.cancel_btn.setVisible(False)
+            self.cancel_btn.setEnabled(True)
+        if self.progress_label:
+            self.progress_label.setText("Status: Error")
         QMessageBox.critical(self, "Error", error_message)
         if self.submit_btn:
             self.submit_btn.setEnabled(True)
 
-    def on_cancel(self):
+    def on_cancel_clicked(self):
+        # Prevent repeated/fast clicks
+        if hasattr(self, '_cancelled') and self._cancelled:
+            return
+        self._cancelled = True
+
+        # Immediately disable the cancel button and reset UI
+        if self.cancel_btn:
+            self.cancel_btn.setEnabled(False)
+
+        # Reset UI immediately for responsive feel
+        self.reset_ui_after_cancel()
+
+        # Cancel the worker (this will also cancel any ongoing API calls)
         if self.worker:
-            self.worker.quit()
-            self.worker.wait()
+            self.worker.cancel()
+
+    def reset_ui_after_cancel(self):
+        # Reset UI to initial state after cancellation
         self.spinner.stop_spinning()
         self.spinner.setVisible(False)
         if self.submit_btn:
             self.submit_btn.setEnabled(True)
+        if self.cancel_btn:
+            self.cancel_btn.setVisible(False)
+            self.cancel_btn.setEnabled(True)
+        if self.progress_label:
+            self.progress_label.setText("Status: Cancelled")
+        self.output_text.append("\nAnalysis cancelled by user.\n")
+        self.api_response_text.clear()
+        # Clear worker reference
+        self.worker = None
+        # Reset cancellation flag
+        self._cancelled = False
+
+    def on_cancel(self):
+        # This method is not used for the button anymore, but keep for compatibility
+        self.reset_ui_after_cancel()

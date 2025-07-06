@@ -1,3 +1,5 @@
+import threading
+import time
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -498,8 +500,7 @@ class TestAnalysisWorker:
             assert finished_signal.called
 
     @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages')
-    @patch('code_wise.codewise_gui.codewise_ui_utils.get_method_ratings')
-    def test_worker_cancellation_stops_processing(self, mock_get_ratings, mock_collect_usages):
+    def test_worker_cancellation_stops_processing(self, mock_collect_usages):
         """Test that cancellation stops processing of remaining methods"""
         # Mock multiple method pointers
         mock_method_pointer1 = Mock()
@@ -525,52 +526,50 @@ class TestAnalysisWorker:
             mock_method_pointer3: [mock_call_site_info],
         }
 
-        # Mock the API call
-        mock_get_ratings.return_value = "Test API response"
-
         # Mock get_method_body
         with patch('code_wise.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
             mock_get_body.return_value = "def test_method(): pass"
 
             worker = AnalysisWorker("/test/root", "/test/file.py")
 
-            # Mock signals
-            progress_signal = Mock()
-            api_response_signal = Mock()
-            finished_signal = Mock()
+            # Mock the CancellableAPICall.call_api method
+            with patch.object(worker._api_call, 'call_api') as mock_call_api:
+                mock_call_api.return_value = "Test API response"
 
-            worker.progress.connect(progress_signal)
-            worker.api_response.connect(api_response_signal)
-            worker.finished.connect(finished_signal)
+                # Mock signals
+                progress_signal = Mock()
+                api_response_signal = Mock()
+                finished_signal = Mock()
 
-            # Cancel the worker after it starts
-            def cancel_after_first_method():
-                # Cancel after the first method is processed
-                if mock_get_ratings.call_count >= 1:
-                    worker.cancel()
+                worker.progress.connect(progress_signal)
+                worker.api_response.connect(api_response_signal)
+                worker.finished.connect(finished_signal)
 
-            # Mock the API call to trigger cancellation
-            original_get_ratings = mock_get_ratings.side_effect
+                # Cancel the worker after it starts
+                def cancel_after_first_method():
+                    # Cancel after the first method is processed
+                    if mock_call_api.call_count >= 1:
+                        worker.cancel()
 
-            def get_ratings_with_cancel(*args, **kwargs):
-                cancel_after_first_method()
-                return "Test API response"
+                # Mock the API call to trigger cancellation
+                def call_api_with_cancel(*args, **kwargs):
+                    cancel_after_first_method()
+                    return "Test API response"
 
-            mock_get_ratings.side_effect = get_ratings_with_cancel
+                mock_call_api.side_effect = call_api_with_cancel
 
-            # Run the worker
-            worker.run()
+                # Run the worker
+                worker.run()
 
-            # Verify that only the first method was processed
-            assert mock_get_ratings.call_count == 1
+                # Verify that only the first method was processed
+                assert mock_call_api.call_count == 1
 
-            # Verify that only one API response was emitted
-            api_response_calls = [call[0][0] for call in api_response_signal.call_args_list]
-            assert len(api_response_calls) == 1
-            assert "Analysis for method: test_method_1" in api_response_calls[0]
+                # Verify that no API responses were emitted (cancellation happened during API call)
+                api_response_calls = [call[0][0] for call in api_response_signal.call_args_list]
+                assert len(api_response_calls) == 0
 
-            # Verify finished signal was not emitted (due to cancellation)
-            assert not finished_signal.called
+                # Verify finished signal was not emitted (due to cancellation)
+                assert not finished_signal.called
 
     @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages')
     @patch('code_wise.codewise_gui.codewise_ui_utils.get_method_ratings')
@@ -1035,6 +1034,70 @@ class TestCodewiseApp:
         # Verify spinner was NOT stopped (this is the key change)
         mock_spinner.stop_spinning.assert_not_called()
         mock_spinner.setVisible.assert_not_called()
+
+    def test_cancel_button_resets_ui_immediately(self):
+        """Test that clicking Cancel during a long-running API call resets the UI immediately and no API response is emitted."""
+        from unittest.mock import MagicMock, patch
+
+        from PySide6.QtWidgets import QApplication
+
+        from code_wise.codewise_gui.codewise_ui_utils import AnalysisWorker, CodewiseApp
+
+        app = QApplication.instance() or QApplication([])
+        codewise_app = CodewiseApp()
+
+        # Set up the UI for analysis
+        codewise_app.root_dir_entry.setText("/fake/root")
+        codewise_app.file_path_entry.setText("/fake/file.py")
+        codewise_app.analysis_mode = "single_file"
+
+        # Patch AnalysisWorker to simulate a long-running API call
+        with patch.object(AnalysisWorker, '_process_methods') as mock_process_methods:
+
+            def long_running_process_methods(result):
+                # Simulate a long-running API call
+                time.sleep(2)
+
+            mock_process_methods.side_effect = long_running_process_methods
+
+            # Patch collect_method_usages to return a fake method
+            with patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages') as mock_collect:
+                mock_method_pointer = MagicMock()
+                mock_method_pointer.method_id.method_name = "test_method"
+                mock_method_pointer.file_path = "/fake/file.py"
+                mock_call_site_info = MagicMock()
+                mock_call_site_info.function_node = MagicMock()
+                mock_call_site_info.file_path = "/fake/file.py"
+                mock_collect.return_value = {mock_method_pointer: [mock_call_site_info]}
+
+                # Start analysis in a thread to allow cancellation
+                def start_analysis():
+                    codewise_app.on_submit()
+
+                analysis_thread = threading.Thread(target=start_analysis)
+                analysis_thread.start()
+                time.sleep(0.2)  # Let the analysis start
+
+                # Click Cancel while API call is in progress
+                codewise_app.on_cancel_clicked()
+
+                # UI should reset immediately
+                if codewise_app.spinner is not None:
+                    assert not codewise_app.spinner.isVisible()
+                if codewise_app.cancel_btn is not None:
+                    assert codewise_app.cancel_btn.isVisible() is False
+                if codewise_app.submit_btn is not None:
+                    assert codewise_app.submit_btn.isEnabled() is True
+                if codewise_app.progress_label is not None:
+                    assert "cancelled" in codewise_app.progress_label.text().lower()
+                assert "Analysis cancelled by user." in codewise_app.output_text.toPlainText()
+                assert codewise_app.api_response_text.toPlainText() == ""
+
+                # Wait for analysis thread to finish
+                analysis_thread.join(timeout=3)
+
+                # No API response should be emitted after cancellation
+                assert codewise_app.api_response_text.toPlainText() == ""
 
 
 # Cleanup function to destroy QApplication
