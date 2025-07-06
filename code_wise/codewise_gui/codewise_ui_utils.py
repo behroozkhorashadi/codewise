@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
+    QProgressBar,
     QPushButton,
     QScrollArea,
     QSplitter,
@@ -132,6 +133,16 @@ class CodewiseApp(QWidget):
                 font-size: 14px;
                 margin-bottom: 4px;
             }
+            QProgressBar {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                text-align: center;
+                background-color: #e9ecef;
+            }
+            QProgressBar::chunk {
+                background-color: #007bff;
+                border-radius: 3px;
+            }
         """
         )
 
@@ -140,6 +151,8 @@ class CodewiseApp(QWidget):
         self.output_text = QTextEdit()
         self.submit_btn = None  # Will be set in init_ui
         self.progress_label = None  # Will be set in init_ui
+        self.progress_bar = None  # Will be set in init_ui
+        self.api_call_indicator = None  # Will be set in init_ui
         self.worker = None  # Keep reference to worker
 
         self.init_ui()
@@ -197,6 +210,16 @@ class CodewiseApp(QWidget):
         # Progress label
         self.progress_label = QLabel("Status: Idle")
         input_layout.addWidget(self.progress_label)
+
+        # Progress bar
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        input_layout.addWidget(self.progress_bar)
+
+        # API call indicator
+        self.api_call_indicator = QLabel("API Call: Idle")
+        input_layout.addWidget(self.api_call_indicator)
 
         # Add input section to main layout
         main_layout.addLayout(input_layout)
@@ -261,6 +284,13 @@ class CodewiseApp(QWidget):
         if self.submit_btn:
             self.submit_btn.setEnabled(False)
 
+        # Reset progress indicators
+        if self.progress_bar:
+            self.progress_bar.setValue(0)
+        if self.api_call_indicator:
+            self.api_call_indicator.setText("API Call: Idle")
+            self.api_call_indicator.setStyleSheet("")
+
         try:
             # Add debug output
             self.output_text.append(f"Analyzing file: {file_path}\n")
@@ -283,17 +313,48 @@ class CodewiseApp(QWidget):
         if self.progress_label:
             self.progress_label.setText(f"Status: {message}")
 
+        # Update progress bar based on the message
+        if self.progress_bar:
+            if "Analyzing file" in message:
+                self.progress_bar.setValue(10)
+            elif "Found" in message and "methods" in message:
+                self.progress_bar.setValue(30)
+            elif "Processing method" in message:
+                self.progress_bar.setValue(50)
+            elif "Generated prompt" in message:
+                self.progress_bar.setValue(70)
+            elif "Calling LLM API" in message:
+                self.progress_bar.setValue(80)
+                if self.api_call_indicator:
+                    self.api_call_indicator.setText("API Call: In Progress...")
+                    self.api_call_indicator.setStyleSheet("color: #007bff; font-weight: bold;")
+
     def update_api_response(self, api_response):
         self.api_response_text.setText(api_response)
+        if self.progress_bar:
+            self.progress_bar.setValue(100)
+        if self.api_call_indicator:
+            self.api_call_indicator.setText("API Call: Completed")
+            self.api_call_indicator.setStyleSheet("color: #28a745; font-weight: bold;")
 
     def on_analysis_finished(self, message):
         self.output_text.append(message + "\n")
+        if self.progress_bar:
+            self.progress_bar.setValue(100)
+        if self.api_call_indicator:
+            self.api_call_indicator.setText("API Call: Completed")
+            self.api_call_indicator.setStyleSheet("color: #28a745; font-weight: bold;")
         QMessageBox.information(self, "Success", "Process completed successfully!")
         if self.submit_btn:
             self.submit_btn.setEnabled(True)
 
     def on_analysis_error(self, error_message):
         self.output_text.append(f"Error: {error_message}\n")
+        if self.progress_bar:
+            self.progress_bar.setValue(0)
+        if self.api_call_indicator:
+            self.api_call_indicator.setText("API Call: Failed")
+            self.api_call_indicator.setStyleSheet("color: #dc3545; font-weight: bold;")
         QMessageBox.critical(self, "Error", error_message)
         if self.submit_btn:
             self.submit_btn.setEnabled(True)

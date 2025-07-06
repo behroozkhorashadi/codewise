@@ -92,11 +92,33 @@ class MethodUsageCollector(ast.NodeVisitor):
         # Check if the current node is a function definition
         if isinstance(node, ast.FunctionDef):
             module_name = self.current_module_name
-            print(f"Found function: {node.name}")
-            self.method_to_module[node.name] = module_name
-            method_identifier = MethodIdentifier(module_name, method_name=str(node.name))
-            self.method_definitions[method_identifier] = node
-            self.method_file_path_mapping[method_identifier] = node.source_file
+
+            # Check if this function is inside a class
+            parent = getattr(node, 'parent', None)
+            is_class_method = False
+            class_name = ""
+
+            # Traverse up the parent chain to see if we're inside a class
+            current_parent = parent
+            while current_parent:
+                if isinstance(current_parent, ast.ClassDef):
+                    is_class_method = True
+                    class_name = current_parent.name
+                    break
+                current_parent = getattr(current_parent, 'parent', None)
+
+            if is_class_method:
+                print(f"Found class method: {class_name}.{node.name}")
+                # For class methods, we need to handle both the class.method_name and self.method_name cases
+                method_identifier = MethodIdentifier(module_name, method_name=str(node.name))
+                self.method_definitions[method_identifier] = node
+                self.method_file_path_mapping[method_identifier] = node.source_file
+            else:
+                print(f"Found function: {node.name}")
+                self.method_to_module[node.name] = module_name
+                method_identifier = MethodIdentifier(module_name, method_name=str(node.name))
+                self.method_definitions[method_identifier] = node
+                self.method_file_path_mapping[method_identifier] = node.source_file
 
         # Recursively process all child nodes
         for child_node in ast.iter_child_nodes(node):
@@ -116,7 +138,7 @@ class MethodUsageCollector(ast.NodeVisitor):
             module_name = self.import_map.get(method_name, self.current_module_name)
 
         elif isinstance(node.func, ast.Attribute):
-            # Attribute function call, e.g., `module_name.function_name(...)`
+            # Attribute function call, e.g., `module_name.function_name(...)` or `self.method_name(...)`
             attribute_chain = []
             current_node = node.func
 
@@ -129,12 +151,18 @@ class MethodUsageCollector(ast.NodeVisitor):
                 base_name = current_node.id
                 attribute_chain.insert(0, base_name)
 
-                # Check if the base name is an imported module or alias
-                module_name = self.import_map.get(base_name, self.current_module_name)
-                if module_name == self.current_module_name:
-                    # Fallback to local reference if not found in imports
-                    module_name = ".".join(attribute_chain[:-1])
-                method_name = attribute_chain[-1]
+                # Handle class method calls (e.g., self.method_name())
+                if base_name == "self" and len(attribute_chain) > 1:
+                    # This is a method call on self, extract just the method name
+                    method_name = attribute_chain[-1]
+                    module_name = self.current_module_name
+                else:
+                    # Check if the base name is an imported module or alias
+                    module_name = self.import_map.get(base_name, self.current_module_name)
+                    if module_name == self.current_module_name:
+                        # Fallback to local reference if not found in imports
+                        module_name = ".".join(attribute_chain[:-1])
+                    method_name = attribute_chain[-1]
 
         if not method_name:
             return None
