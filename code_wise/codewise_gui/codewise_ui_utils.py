@@ -1,5 +1,7 @@
+import math
+
 from PySide6.QtCore import Qt, QThread, QThreadPool, QTimer, Signal
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -18,6 +20,56 @@ from PySide6.QtWidgets import (
 from code_wise.llm.code_eval_prompt import generate_code_evaluation_prompt
 from code_wise.llm.llm_integration import get_method_ratings
 from code_wise.logic.code_ast_parser import collect_method_usages, get_method_body
+
+
+class LoadingSpinner(QWidget):
+    """A simple loading spinner widget"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.angle = 0
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.rotate)
+        self.setFixedSize(60, 60)
+
+    def start_spinning(self):
+        """Start the spinner animation"""
+        self.timer.start(50)  # Update every 50ms
+
+    def stop_spinning(self):
+        """Stop the spinner animation"""
+        self.timer.stop()
+
+    def rotate(self):
+        """Rotate the spinner"""
+        self.angle = (self.angle + 30) % 360
+        self.update()
+
+    def paintEvent(self, event):
+        """Paint the spinner"""
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Set up the pen and brush
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor("#007bff"))
+
+        # Calculate center and radius
+        center_x = self.width() // 2
+        center_y = self.height() // 2
+        radius = min(self.width(), self.height()) // 2 - 5
+
+        # Draw 8 dots in a circle
+        for i in range(8):
+            angle_rad = (self.angle + (i * 45)) * 3.14159 / 180
+            x = center_x + radius * 0.7 * math.cos(angle_rad)
+            y = center_y + radius * 0.7 * math.sin(angle_rad)
+
+            # Make dots fade based on position
+            alpha = 255 - (i * 30) % 255
+            painter.setBrush(QColor(0, 123, 255, alpha))
+
+            painter.drawEllipse(int(x - 3), int(y - 3), 6, 6)
 
 
 class AnalysisWorker(QThread):
@@ -133,16 +185,6 @@ class CodewiseApp(QWidget):
                 font-size: 14px;
                 margin-bottom: 4px;
             }
-            QProgressBar {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                text-align: center;
-                background-color: #e9ecef;
-            }
-            QProgressBar::chunk {
-                background-color: #007bff;
-                border-radius: 3px;
-            }
         """
         )
 
@@ -151,8 +193,7 @@ class CodewiseApp(QWidget):
         self.output_text = QTextEdit()
         self.submit_btn = None  # Will be set in init_ui
         self.progress_label = None  # Will be set in init_ui
-        self.progress_bar = None  # Will be set in init_ui
-        self.api_call_indicator = None  # Will be set in init_ui
+        self.spinner = None  # Will be set in init_ui
         self.worker = None  # Keep reference to worker
 
         self.init_ui()
@@ -188,19 +229,23 @@ class CodewiseApp(QWidget):
         self.submit_btn.setStyleSheet(
             """
             QPushButton {
-                background-color: #28a745;
+                background-color: #007bff;
                 color: white;
                 border: none;
                 border-radius: 4px;
                 padding: 8px 16px;
-                font-weight: 600;
-                font-size: 16px;
+                font-weight: 500;
+                font-size: 14px;
             }
             QPushButton:hover {
-                background-color: #218838;
+                background-color: #0056b3;
             }
             QPushButton:pressed {
-                background-color: #1e7e34;
+                background-color: #004085;
+            }
+            QPushButton:disabled {
+                background-color: #6c757d;
+                color: #adb5bd;
             }
         """
         )
@@ -211,21 +256,21 @@ class CodewiseApp(QWidget):
         self.progress_label = QLabel("Status: Idle")
         input_layout.addWidget(self.progress_label)
 
-        # Progress bar
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setRange(0, 100)
-        self.progress_bar.setValue(0)
-        input_layout.addWidget(self.progress_bar)
-
-        # API call indicator
-        self.api_call_indicator = QLabel("API Call: Idle")
-        input_layout.addWidget(self.api_call_indicator)
-
         # Add input section to main layout
         main_layout.addLayout(input_layout)
 
+        # Centered loading spinner
+        self.spinner = LoadingSpinner(self)
+        self.spinner.setFixedSize(60, 60)
+        self.spinner.setVisible(False)
+        spinner_layout = QHBoxLayout()
+        spinner_layout.addStretch()
+        spinner_layout.addWidget(self.spinner)
+        spinner_layout.addStretch()
+        main_layout.addLayout(spinner_layout)
+
         # Create splitter for the text areas
-        splitter = QSplitter()
+        splitter = QSplitter(Qt.Horizontal)
 
         # Debug/Progress section
         debug_widget = QWidget()
@@ -252,14 +297,15 @@ class CodewiseApp(QWidget):
 
         splitter.addWidget(response_widget)
 
-        # Set initial splitter proportions (60% debug, 40% response)
-        splitter.setSizes([600, 400])
+        # Set initial splitter proportions (40% debug, 60% response)
+        splitter.setSizes([400, 600])
 
         main_layout.addWidget(splitter, stretch=1)
         self.setLayout(main_layout)
 
     def _styled_label(self, text):
         label = QLabel(text)
+        label.setStyleSheet("font-weight: 600; margin-bottom: 4px;")
         return label
 
     def select_root_directory(self):
@@ -268,93 +314,76 @@ class CodewiseApp(QWidget):
             self.root_dir_entry.setText(directory)
 
     def select_file(self):
-        file, _ = QFileDialog.getOpenFileName(self, "Select File")
-        if file:
-            self.file_path_entry.setText(file)
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select File", "", "Python Files (*.py)")
+        if file_path:
+            self.file_path_entry.setText(file_path)
 
     def on_submit(self):
         root_directory = self.root_dir_entry.text()
         file_path = self.file_path_entry.text()
 
         if not root_directory or not file_path:
-            QMessageBox.critical(self, "Input Error", "Both fields must be filled out!")
+            QMessageBox.warning(self, "Warning", "Please provide both root directory and file path.")
             return
 
-        self.output_text.clear()
         if self.submit_btn:
             self.submit_btn.setEnabled(False)
 
-        # Reset progress indicators
-        if self.progress_bar:
-            self.progress_bar.setValue(0)
-        if self.api_call_indicator:
-            self.api_call_indicator.setText("API Call: Idle")
-            self.api_call_indicator.setStyleSheet("")
+        # Show spinner and update status
+        self.spinner.setVisible(True)
+        self.spinner.start_spinning()
 
         try:
             # Add debug output
             self.output_text.append(f"Analyzing file: {file_path}\n")
             self.output_text.append(f"Root directory: {root_directory}\n")
 
+            # Start the actual analysis with API calls
             self.worker = AnalysisWorker(root_directory, file_path)
             self.worker.progress.connect(self.update_progress)
             self.worker.api_response.connect(self.update_api_response)
             self.worker.finished.connect(self.on_analysis_finished)
             self.worker.error.connect(self.on_analysis_error)
             self.worker.start()
+
         except Exception as e:
-            self.output_text.append(f"Error occurred: {str(e)}\n")
-            QMessageBox.critical(self, "Error", f"An error occurred: {e}")
+            self.output_text.append(f"Error: {str(e)}\n")
             if self.submit_btn:
                 self.submit_btn.setEnabled(True)
+            self.spinner.stop_spinning()
+            self.spinner.setVisible(False)
 
     def update_progress(self, message):
         self.output_text.append(message + "\n")
         if self.progress_label:
             self.progress_label.setText(f"Status: {message}")
 
-        # Update progress bar based on the message
-        if self.progress_bar:
-            if "Analyzing file" in message:
-                self.progress_bar.setValue(10)
-            elif "Found" in message and "methods" in message:
-                self.progress_bar.setValue(30)
-            elif "Processing method" in message:
-                self.progress_bar.setValue(50)
-            elif "Generated prompt" in message:
-                self.progress_bar.setValue(70)
-            elif "Calling LLM API" in message:
-                self.progress_bar.setValue(80)
-                if self.api_call_indicator:
-                    self.api_call_indicator.setText("API Call: In Progress...")
-                    self.api_call_indicator.setStyleSheet("color: #007bff; font-weight: bold;")
-
     def update_api_response(self, api_response):
         self.api_response_text.setText(api_response)
-        if self.progress_bar:
-            self.progress_bar.setValue(100)
-        if self.api_call_indicator:
-            self.api_call_indicator.setText("API Call: Completed")
-            self.api_call_indicator.setStyleSheet("color: #28a745; font-weight: bold;")
+        self.spinner.stop_spinning()
+        self.spinner.setVisible(False)
 
     def on_analysis_finished(self, message):
         self.output_text.append(message + "\n")
-        if self.progress_bar:
-            self.progress_bar.setValue(100)
-        if self.api_call_indicator:
-            self.api_call_indicator.setText("API Call: Completed")
-            self.api_call_indicator.setStyleSheet("color: #28a745; font-weight: bold;")
+        self.spinner.stop_spinning()
+        self.spinner.setVisible(False)
         QMessageBox.information(self, "Success", "Process completed successfully!")
         if self.submit_btn:
             self.submit_btn.setEnabled(True)
 
     def on_analysis_error(self, error_message):
         self.output_text.append(f"Error: {error_message}\n")
-        if self.progress_bar:
-            self.progress_bar.setValue(0)
-        if self.api_call_indicator:
-            self.api_call_indicator.setText("API Call: Failed")
-            self.api_call_indicator.setStyleSheet("color: #dc3545; font-weight: bold;")
+        self.spinner.stop_spinning()
+        self.spinner.setVisible(False)
         QMessageBox.critical(self, "Error", error_message)
+        if self.submit_btn:
+            self.submit_btn.setEnabled(True)
+
+    def on_cancel(self):
+        if self.worker:
+            self.worker.quit()
+            self.worker.wait()
+        self.spinner.stop_spinning()
+        self.spinner.setVisible(False)
         if self.submit_btn:
             self.submit_btn.setEnabled(True)
