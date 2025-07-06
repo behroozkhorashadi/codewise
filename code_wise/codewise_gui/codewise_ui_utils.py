@@ -1,8 +1,10 @@
 import math
+import os
 
 from PySide6.QtCore import Qt, QThread, QThreadPool, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -10,6 +12,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
+    QRadioButton,
     QScrollArea,
     QSplitter,
     QTextEdit,
@@ -72,6 +75,40 @@ class LoadingSpinner(QWidget):
             painter.drawEllipse(int(x - 3), int(y - 3), 6, 6)
 
 
+def collect_method_usages_entire_project(root_directory):
+    """Collect method usages from all Python files in the entire project."""
+    all_methods = {}
+
+    # Walk through all Python files in the project
+    for root, dirs, files in os.walk(root_directory):
+        # Skip common directories that shouldn't be analyzed
+        dirs[:] = [d for d in dirs if d not in ['.git', '__pycache__', '.venv', 'venv', 'node_modules']]
+
+        for file in files:
+            if file.endswith('.py'):
+                file_path = os.path.join(root, file)
+                try:
+                    # Collect methods from this file
+                    file_methods = collect_method_usages(root_directory, file_path)
+
+                    # Add to overall results
+                    for method_pointer, call_site_infos in file_methods.items():
+                        # Create a unique key for the method
+                        method_key = f"{method_pointer.file_path}:{method_pointer.method_id.method_name}"
+                        if method_key not in all_methods:
+                            all_methods[method_key] = (method_pointer, call_site_infos)
+                        else:
+                            # Merge call site infos if method exists in multiple files
+                            existing_pointer, existing_infos = all_methods[method_key]
+                            all_methods[method_key] = (existing_pointer, existing_infos + call_site_infos)
+
+                except Exception as e:
+                    print(f"Error processing {file_path}: {e}")
+                    continue
+
+    return all_methods
+
+
 class AnalysisWorker(QThread):
     """Worker thread for performing code analysis"""
 
@@ -80,54 +117,152 @@ class AnalysisWorker(QThread):
     finished = Signal(str)
     error = Signal(str)
 
-    def __init__(self, root_directory, file_path):
+    def __init__(self, root_directory, file_path=None, analysis_mode="single_file"):
         super().__init__()
         self.root_directory = root_directory
         self.file_path = file_path
+        self.analysis_mode = analysis_mode
+        self._is_cancelled = False
+
+    def cancel(self):
+        """Cancel the analysis."""
+        self._is_cancelled = True
+        self.quit()
+        self.wait()
 
     def run(self):
         try:
-            self.progress.emit("Analyzing file...")
-            result = collect_method_usages(self.root_directory, self.file_path)
-
-            self.progress.emit(f"Found {len(result)} methods with usages")
-
-            if not result:
-                self.finished.emit(
-                    "No methods with usages found. This could mean:\n1. The file doesn't contain any function definitions\n2. The functions in the file are not called anywhere in the codebase\n3. There's an issue with the AST parsing"
-                )
+            if self._is_cancelled:
                 return
 
-            function_def = ""
-            openai_prompt = ""
-            usage_examples = ""
+            if self.analysis_mode == "single_file":
+                self.progress.emit(f"Analyzing single file: {self.file_path}")
+                result = collect_method_usages(self.root_directory, self.file_path)
+                if result:
+                    self._process_methods(result)
+                else:
+                    self.error.emit("No methods found in the specified file.")
+            else:
+                self.progress.emit(f"Analyzing entire project: {self.root_directory}")
+                result = collect_method_usages_entire_project(self.root_directory)
+                if result:
+                    self._process_entire_project(result)
+                else:
+                    self.error.emit("No methods found in the project.")
 
-            for method_pointer, call_site_infos in result.items():
-                self.progress.emit(f"Processing method: {method_pointer.method_id.method_name}")
-                self.progress.emit(f"Found {len(call_site_infos)} usage examples")
-
-                function_def = get_method_body(method_pointer.function_node, method_pointer.file_path)
-                self.progress.emit(f"Function definition length: {len(function_def)} characters")
-
-                for call_site_info in call_site_infos:
-                    usage_examples += f"{get_method_body(call_site_info.function_node, call_site_info.file_path)}\n"
-
-                self.progress.emit(f"Usage examples length: {len(usage_examples)} characters")
-
-                openai_prompt = generate_code_evaluation_prompt(function_def, usage_examples)
-                self.progress.emit(f"Generated prompt length: {len(openai_prompt)} characters")
-
-                self.progress.emit("Calling LLM API...")
-                api_response = get_method_ratings(openai_prompt)
-                self.api_response.emit(api_response)
-
-                # Only process the first method for now
-                break
-
-            self.finished.emit("Analysis completed successfully!")
+            if not self._is_cancelled:
+                self.finished.emit("Analysis completed successfully!")
 
         except Exception as e:
-            self.error.emit(f"Error occurred: {str(e)}")
+            self.error.emit(f"Error during analysis: {str(e)}")
+
+    def _process_methods(self, result):
+        """Process methods for single file analysis."""
+        all_results = []
+
+        for method_pointer, call_site_infos in result.items():
+            if self._is_cancelled:
+                return
+
+            method_name = method_pointer.method_id.method_name
+            self.progress.emit(f"Processing method: {method_name}")
+            self.progress.emit(f"Found {len(call_site_infos)} usage examples")
+
+            # Get method content and usage examples
+            function_def = get_method_body(method_pointer.function_node, method_pointer.file_path)
+            usage_examples = []
+            for call_site_info in call_site_infos:
+                usage_content = get_method_body(call_site_info.function_node, call_site_info.file_path)
+                usage_examples.append(usage_content)
+
+            # Generate prompt and call API
+            usage_examples_text = "\n\n".join(usage_examples) if usage_examples else ""
+            prompt = generate_code_evaluation_prompt(function_def, usage_examples_text)
+            self.progress.emit(f"Generated prompt for {method_name}")
+            self.progress.emit("Calling LLM API...")
+
+            try:
+                api_response = get_method_ratings(prompt)
+                self.progress.emit(f"API call completed for {method_name}")
+
+                all_results.append({"method_name": method_name, "api_response": api_response})
+
+                # Emit individual API response for popup
+                self.api_response.emit(f"Analysis for method: {method_name}\n\n{api_response}")
+
+            except Exception as e:
+                self.progress.emit(f"Error calling API for {method_name}: {str(e)}")
+
+        self.progress.emit(f"Processed {len(all_results)} methods")
+
+    def _process_entire_project(self, result):
+        """Process methods for entire project analysis."""
+        total_methods = len(result)
+        processed_methods = 0
+        all_results = []
+
+        self.progress.emit(f"Processing {total_methods} methods from entire project...")
+
+        # Group methods by file for better organization
+        methods_by_file = {}
+        for method_key, (method_pointer, call_site_infos) in result.items():
+            file_path = method_pointer.file_path
+            if file_path not in methods_by_file:
+                methods_by_file[file_path] = []
+            methods_by_file[file_path].append((method_pointer, call_site_infos))
+
+        self.progress.emit(f"Found methods in {len(methods_by_file)} files")
+
+        for file_path, methods in methods_by_file.items():
+            if self._is_cancelled:
+                return
+
+            self.progress.emit(f"Processing file: {file_path}")
+
+            for method_pointer, call_site_infos in methods:
+                if self._is_cancelled:
+                    return
+
+                method_name = method_pointer.method_id.method_name
+                self.progress.emit(f"Processing method: {method_name}")
+
+                # Get method content and usage examples
+                function_def = get_method_body(method_pointer.function_node, method_pointer.file_path)
+                usage_examples = []
+                for call_site_info in call_site_infos:
+                    usage_content = get_method_body(call_site_info.function_node, call_site_info.file_path)
+                    usage_examples.append(usage_content)
+
+                # Generate prompt and call API
+                usage_examples_text = "\n\n".join(usage_examples) if usage_examples else ""
+                prompt = generate_code_evaluation_prompt(function_def, usage_examples_text)
+                self.progress.emit(f"Generated prompt for {method_name}")
+                self.progress.emit("Calling LLM API...")
+
+                try:
+                    api_response = get_method_ratings(prompt)
+                    self.progress.emit(f"API call completed for {method_name}")
+
+                    all_results.append(
+                        {
+                            "method_name": method_name,
+                            "file_path": method_pointer.file_path,
+                            "api_response": api_response,
+                        }
+                    )
+                    processed_methods += 1
+
+                    # Emit individual API response for popup
+                    self.api_response.emit(f"Analysis for method: {method_name}\n\n{api_response}")
+
+                except Exception as e:
+                    self.progress.emit(f"Error calling API for {method_name}: {str(e)}")
+
+                # Update progress
+                progress_percent = (processed_methods / total_methods) * 100
+                self.progress.emit(f"Progress: {processed_methods}/{total_methods} methods ({progress_percent:.1f}%)")
+
+        self.progress.emit(f"Total analysis completed. Processed {len(all_results)} methods.")
 
 
 class CodewiseApp(QWidget):
@@ -185,6 +320,16 @@ class CodewiseApp(QWidget):
                 font-size: 14px;
                 margin-bottom: 4px;
             }
+            QRadioButton {
+                color: #495057;
+                font-weight: 500;
+                font-size: 14px;
+                margin: 4px 0;
+            }
+            QRadioButton::indicator {
+                width: 16px;
+                height: 16px;
+            }
         """
         )
 
@@ -195,6 +340,7 @@ class CodewiseApp(QWidget):
         self.progress_label = None  # Will be set in init_ui
         self.spinner = None  # Will be set in init_ui
         self.worker = None  # Keep reference to worker
+        self.analysis_mode = "single_file"  # Default mode
 
         self.init_ui()
 
@@ -203,6 +349,23 @@ class CodewiseApp(QWidget):
 
         # Input section
         input_layout = QVBoxLayout()
+
+        # Analysis Mode Selection
+        input_layout.addWidget(self._styled_label("Analysis Mode:"))
+        mode_layout = QHBoxLayout()
+
+        self.single_file_radio = QRadioButton("Single File Mode")
+        self.single_file_radio.setChecked(True)
+        self.single_file_radio.toggled.connect(self.on_analysis_mode_selected)
+
+        self.entire_project_radio = QRadioButton("Entire Project Mode")
+        self.entire_project_radio.toggled.connect(self.on_analysis_mode_selected)
+
+        mode_layout.addWidget(self.single_file_radio)
+        mode_layout.addWidget(self.entire_project_radio)
+        mode_layout.addStretch()
+
+        input_layout.addLayout(mode_layout)
 
         # Root Directory
         input_layout.addWidget(self._styled_label("Root Directory:"))
@@ -213,13 +376,14 @@ class CodewiseApp(QWidget):
         root_layout.addWidget(browse_root_btn)
         input_layout.addLayout(root_layout)
 
-        # File Path
-        input_layout.addWidget(self._styled_label("File Path:"))
+        # File Path (initially visible for single file mode)
+        self.file_path_label = self._styled_label("File Path:")
+        input_layout.addWidget(self.file_path_label)
         file_layout = QHBoxLayout()
         file_layout.addWidget(self.file_path_entry)
-        browse_file_btn = QPushButton("Browse")
-        browse_file_btn.clicked.connect(self.select_file)
-        file_layout.addWidget(browse_file_btn)
+        self.browse_file_btn = QPushButton("Browse")
+        self.browse_file_btn.clicked.connect(self.select_file)
+        file_layout.addWidget(self.browse_file_btn)
         input_layout.addLayout(file_layout)
 
         # Submit button
@@ -303,6 +467,26 @@ class CodewiseApp(QWidget):
         main_layout.addWidget(splitter, stretch=1)
         self.setLayout(main_layout)
 
+        # Initialize the mode selection to ensure proper visibility
+        self.on_analysis_mode_selected()
+
+    def on_analysis_mode_selected(self):
+        """Handle analysis mode selection"""
+        if self.single_file_radio.isChecked():
+            self.analysis_mode = "single_file"
+            self.file_path_label.setVisible(True)
+            self.file_path_entry.setVisible(True)
+            self.file_path_entry.setEnabled(True)
+            self.browse_file_btn.setVisible(True)
+            self.browse_file_btn.setEnabled(True)
+        else:
+            self.analysis_mode = "entire_project"
+            self.file_path_label.setVisible(False)
+            self.file_path_entry.setVisible(False)
+            self.file_path_entry.setEnabled(False)
+            self.browse_file_btn.setVisible(False)
+            self.browse_file_btn.setEnabled(False)
+
     def _styled_label(self, text):
         label = QLabel(text)
         label.setStyleSheet("font-weight: 600; margin-bottom: 4px;")
@@ -320,11 +504,18 @@ class CodewiseApp(QWidget):
 
     def on_submit(self):
         root_directory = self.root_dir_entry.text()
-        file_path = self.file_path_entry.text()
 
-        if not root_directory or not file_path:
-            QMessageBox.warning(self, "Warning", "Please provide both root directory and file path.")
+        if not root_directory:
+            QMessageBox.warning(self, "Warning", "Please provide a root directory.")
             return
+
+        if self.analysis_mode == "single_file":
+            file_path = self.file_path_entry.text()
+            if not file_path:
+                QMessageBox.warning(self, "Warning", "Please provide a file path for single file mode.")
+                return
+        else:
+            file_path = None
 
         if self.submit_btn:
             self.submit_btn.setEnabled(False)
@@ -335,11 +526,14 @@ class CodewiseApp(QWidget):
 
         try:
             # Add debug output
-            self.output_text.append(f"Analyzing file: {file_path}\n")
+            if self.analysis_mode == "single_file":
+                self.output_text.append(f"Analyzing file: {file_path}\n")
+            else:
+                self.output_text.append(f"Analyzing entire project: {root_directory}\n")
             self.output_text.append(f"Root directory: {root_directory}\n")
 
             # Start the actual analysis with API calls
-            self.worker = AnalysisWorker(root_directory, file_path)
+            self.worker = AnalysisWorker(root_directory, file_path, self.analysis_mode)
             self.worker.progress.connect(self.update_progress)
             self.worker.api_response.connect(self.update_api_response)
             self.worker.finished.connect(self.on_analysis_finished)
@@ -360,8 +554,7 @@ class CodewiseApp(QWidget):
 
     def update_api_response(self, api_response):
         self.api_response_text.setText(api_response)
-        self.spinner.stop_spinning()
-        self.spinner.setVisible(False)
+        # Don't stop the spinner here - let it continue for multiple API responses
 
     def on_analysis_finished(self, message):
         self.output_text.append(message + "\n")
