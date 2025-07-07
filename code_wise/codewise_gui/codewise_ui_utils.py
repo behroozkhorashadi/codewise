@@ -481,9 +481,9 @@ class CodewiseApp(QWidget):
         input_layout.addWidget(self._styled_label("Root Directory:"))
         root_layout = QHBoxLayout()
         root_layout.addWidget(self.root_dir_entry)
-        browse_root_btn = QPushButton("Browse")
-        browse_root_btn.clicked.connect(self.select_root_directory)
-        root_layout.addWidget(browse_root_btn)
+        self.browse_root_btn = QPushButton("Browse")
+        self.browse_root_btn.clicked.connect(self.select_root_directory)
+        root_layout.addWidget(self.browse_root_btn)
         input_layout.addLayout(root_layout)
 
         # File Path (initially visible for single file mode)
@@ -673,6 +673,18 @@ class CodewiseApp(QWidget):
         if self.progress_label:
             self.progress_label.setText("Status: Starting...")
 
+        # Disable browse buttons during analysis
+        if self.browse_root_btn:
+            self.browse_root_btn.setEnabled(False)
+        if self.browse_file_btn:
+            self.browse_file_btn.setEnabled(False)
+
+        # Disable text input boxes during analysis
+        if self.root_dir_entry:
+            self.root_dir_entry.setEnabled(False)
+        if self.file_path_entry:
+            self.file_path_entry.setEnabled(False)
+
         # Show spinner and update status
         self.spinner.setVisible(True)
         self.spinner.start_spinning()
@@ -718,6 +730,17 @@ class CodewiseApp(QWidget):
             self.cancel_btn.setEnabled(True)
         if self.progress_label:
             self.progress_label.setText("Status: Completed")
+
+        # Re-enable browse buttons and text input boxes
+        if self.browse_root_btn:
+            self.browse_root_btn.setEnabled(True)
+        if self.browse_file_btn:
+            self.browse_file_btn.setEnabled(True)
+        if self.root_dir_entry:
+            self.root_dir_entry.setEnabled(True)
+        if self.file_path_entry:
+            self.file_path_entry.setEnabled(True)
+
         QMessageBox.information(self, "Success", "Process completed successfully!")
         if self.submit_btn:
             self.submit_btn.setEnabled(True)
@@ -734,6 +757,17 @@ class CodewiseApp(QWidget):
             self.cancel_btn.setEnabled(True)
         if self.progress_label:
             self.progress_label.setText("Status: Error")
+
+        # Re-enable browse buttons and text input boxes
+        if self.browse_root_btn:
+            self.browse_root_btn.setEnabled(True)
+        if self.browse_file_btn:
+            self.browse_file_btn.setEnabled(True)
+        if self.root_dir_entry:
+            self.root_dir_entry.setEnabled(True)
+        if self.file_path_entry:
+            self.file_path_entry.setEnabled(True)
+
         QMessageBox.critical(self, "Error", error_message)
         if self.submit_btn:
             self.submit_btn.setEnabled(True)
@@ -772,6 +806,17 @@ class CodewiseApp(QWidget):
         self.worker = None
         # Reset cancellation flag
         self._cancelled = False
+
+        # Re-enable browse buttons and text input boxes
+        if self.browse_root_btn:
+            self.browse_root_btn.setEnabled(True)
+        if self.browse_file_btn:
+            self.browse_file_btn.setEnabled(True)
+
+        if self.root_dir_entry:
+            self.root_dir_entry.setEnabled(True)
+        if self.file_path_entry:
+            self.file_path_entry.setEnabled(True)
 
     def on_cancel(self):
         # This method is not used for the button anymore, but keep for compatibility

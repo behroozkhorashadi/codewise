@@ -869,9 +869,7 @@ class TestCodewiseApp:
 
         codewise_app.on_cancel()
 
-        # Verify worker was stopped and UI was reset
-        codewise_app.worker.quit.assert_called()
-        codewise_app.worker.wait.assert_called()
+        # Verify UI was reset (on_cancel just calls reset_ui_after_cancel)
         codewise_app.spinner.stop_spinning.assert_called()
         codewise_app.spinner.setVisible.assert_called_with(False)
         codewise_app.submit_btn.setEnabled.assert_called_with(True)
@@ -1098,6 +1096,131 @@ class TestCodewiseApp:
 
                 # No API response should be emitted after cancellation
                 assert codewise_app.api_response_text.toPlainText() == ""
+
+    def test_input_controls_disabled_during_analysis(self):
+        """Test that browse buttons and text input boxes are disabled during analysis and re-enabled when complete."""
+        from unittest.mock import MagicMock, patch
+
+        from PySide6.QtWidgets import QApplication
+
+        from code_wise.codewise_gui.codewise_ui_utils import AnalysisWorker, CodewiseApp
+
+        app = QApplication.instance() or QApplication([])
+        codewise_app = CodewiseApp()
+
+        # Set up the UI for analysis
+        codewise_app.root_dir_entry.setText("/fake/root")
+        codewise_app.file_path_entry.setText("/fake/file.py")
+        codewise_app.analysis_mode = "single_file"
+
+        # Verify initial state - controls should be enabled
+        assert codewise_app.browse_root_btn.isEnabled() is True
+        assert codewise_app.browse_file_btn.isEnabled() is True
+        assert codewise_app.root_dir_entry.isEnabled() is True
+        assert codewise_app.file_path_entry.isEnabled() is True
+
+        # Patch AnalysisWorker to simulate a quick analysis
+        with patch.object(AnalysisWorker, '_process_methods') as mock_process_methods:
+
+            def quick_process_methods(result):
+                # Simulate a quick analysis
+                pass
+
+            mock_process_methods.side_effect = quick_process_methods
+
+            # Patch collect_method_usages to return a fake method
+            with patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages') as mock_collect:
+                mock_method_pointer = MagicMock()
+                mock_method_pointer.method_id.method_name = "test_method"
+                mock_method_pointer.file_path = "/fake/file.py"
+                mock_call_site_info = MagicMock()
+                mock_call_site_info.function_node = MagicMock()
+                mock_call_site_info.file_path = "/fake/file.py"
+                mock_collect.return_value = {mock_method_pointer: [mock_call_site_info]}
+
+                # Start analysis
+                codewise_app.on_submit()
+
+                # Verify controls are disabled during analysis
+                assert codewise_app.browse_root_btn.isEnabled() is False
+                assert codewise_app.browse_file_btn.isEnabled() is False
+                assert codewise_app.root_dir_entry.isEnabled() is False
+                assert codewise_app.file_path_entry.isEnabled() is False
+
+                # Mock QMessageBox to prevent popup during test
+                with patch('PySide6.QtWidgets.QMessageBox.information') as mock_info:
+                    # Simulate analysis completion
+                    codewise_app.on_analysis_finished("Analysis completed successfully!")
+
+                    # Verify QMessageBox was called
+                    mock_info.assert_called_once()
+
+                # Verify controls are re-enabled after analysis
+                assert codewise_app.browse_root_btn.isEnabled() is True
+                assert codewise_app.browse_file_btn.isEnabled() is True
+                assert codewise_app.root_dir_entry.isEnabled() is True
+                assert codewise_app.file_path_entry.isEnabled() is True
+
+    def test_input_controls_re_enabled_after_cancellation(self):
+        """Test that browse buttons and text input boxes are re-enabled after cancellation."""
+        from unittest.mock import MagicMock, patch
+
+        from PySide6.QtWidgets import QApplication
+
+        from code_wise.codewise_gui.codewise_ui_utils import AnalysisWorker, CodewiseApp
+
+        app = QApplication.instance() or QApplication([])
+        codewise_app = CodewiseApp()
+
+        # Set up the UI for analysis
+        codewise_app.root_dir_entry.setText("/fake/root")
+        codewise_app.file_path_entry.setText("/fake/file.py")
+        codewise_app.analysis_mode = "single_file"
+
+        # Patch AnalysisWorker to simulate a long-running API call
+        with patch.object(AnalysisWorker, '_process_methods') as mock_process_methods:
+
+            def long_running_process_methods(result):
+                # Simulate a long-running API call
+                time.sleep(2)
+
+            mock_process_methods.side_effect = long_running_process_methods
+
+            # Patch collect_method_usages to return a fake method
+            with patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages') as mock_collect:
+                mock_method_pointer = MagicMock()
+                mock_method_pointer.method_id.method_name = "test_method"
+                mock_method_pointer.file_path = "/fake/file.py"
+                mock_call_site_info = MagicMock()
+                mock_call_site_info.function_node = MagicMock()
+                mock_call_site_info.file_path = "/fake/file.py"
+                mock_collect.return_value = {mock_method_pointer: [mock_call_site_info]}
+
+                # Start analysis in a thread to allow cancellation
+                def start_analysis():
+                    codewise_app.on_submit()
+
+                analysis_thread = threading.Thread(target=start_analysis)
+                analysis_thread.start()
+                time.sleep(0.2)  # Let the analysis start
+
+                # Verify controls are disabled during analysis
+                assert codewise_app.browse_root_btn.isEnabled() is False
+                assert codewise_app.browse_file_btn.isEnabled() is False
+                assert codewise_app.root_dir_entry.isEnabled() is False
+                assert codewise_app.file_path_entry.isEnabled() is False
+
+                # Click Cancel while API call is in progress
+                codewise_app.on_cancel_clicked()
+
+                # Verify controls are re-enabled after cancellation
+                assert codewise_app.browse_root_btn.isEnabled() is True
+                assert codewise_app.browse_file_btn.isEnabled() is True
+                assert codewise_app.root_dir_entry.isEnabled() is True
+                assert codewise_app.file_path_entry.isEnabled() is True
+
+                # Wait for analysis thread to finish
+                analysis_thread.join(timeout=3)
 
 
 # Cleanup function to destroy QApplication
