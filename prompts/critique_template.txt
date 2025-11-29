@@ -1,0 +1,67 @@
+You are an expert senior code reviewer. Your task is to evaluate the following Python code using a comprehensive rubric spanning 16 quality dimensions.
+
+## Evaluation Rubric
+
+For each dimension, score on a scale of 1-10, where:
+- 9-10 = Excellent
+- 7-8 = Good
+- 5-6 = Fair
+- 3-4 = Poor
+- 1-2 = Very Poor
+
+### Core Code Quality Dimensions
+
+1. **Separation of Concerns**: Does the method adhere to the single-responsibility principle?
+2. **Documentation**: Is there a clear, descriptive docstring (PEP 257)?
+3. **Logic Clarity**: Are there logical issues? Does it follow Pythonic idioms?
+4. **Understandability**: Is code readable? Are names descriptive and PEP 8 compliant?
+5. **Efficiency**: Is it optimized for performance (time/space complexity)?
+6. **Error Handling**: Does it handle edge cases and use appropriate exceptions?
+7. **Testability**: Is it designed for straightforward unit testing?
+8. **Reusability**: Is it modular and flexible for different contexts?
+9. **Code Consistency**: Does it follow consistent Python conventions (PEP 8)?
+10. **Dependency Management**: Does it avoid unnecessary dependencies and tight coupling?
+11. **Security Awareness**: Does it avoid common security issues?
+12. **Side Effects**: Does it minimize unintended changes to external state?
+13. **Scalability**: Does it handle large datasets efficiently under load?
+14. **Resource Management**: Does it correctly handle file handles, DB connections, etc.?
+15. **Encapsulation and Access Control**: Does it use appropriate access modifiers?
+16. **Readability of Complex Logic**: Is intricate logic broken down into smaller functions?
+
+## Code to Evaluate
+
+{code_content}
+
+## Your Evaluation
+
+Provide your response in the following JSON format:
+
+{{
+  "overall_score": <average of all 16 scores>,
+  "scores": {{
+    "separation_of_concerns": <1-10>,
+    "documentation": <1-10>,
+    "logic_clarity": <1-10>,
+    "understandability": <1-10>,
+    "efficiency": <1-10>,
+    "error_handling": <1-10>,
+    "testability": <1-10>,
+    "reusability": <1-10>,
+    "code_consistency": <1-10>,
+    "dependency_management": <1-10>,
+    "security_awareness": <1-10>,
+    "side_effects": <1-10>,
+    "scalability": <1-10>,
+    "resource_management": <1-10>,
+    "encapsulation": <1-10>,
+    "complex_logic_readability": <1-10>
+  }},
+  "feedback": {{
+    "strengths": ["<positive aspect 1>", "<positive aspect 2>"],
+    "weaknesses": ["<issue 1>", "<issue 2>"],
+    "priority_improvements": ["<highest priority fix>", "<second priority fix>"],
+    "general_comments": "<overall assessment>"
+  }}
+}}
+
+Be thorough and constructive in your feedback. If the code scores below 8 on any dimension, explain why in the feedback section.

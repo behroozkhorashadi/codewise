@@ -1,0 +1,112 @@
+# Codewise Research Pipeline Configuration
+# This file configures the LLM code review comparison pipeline
+
+# API Configuration
+api:
+  # OpenAI API configuration (Claude uses OpenAI format, GPT-4 uses direct API)
+  openai:
+    api_key: ${OPENAI_API_KEY}  # Set via .env or environment variable
+    model: gpt-4-turbo
+    timeout: 30
+    max_retries: 3
+    retry_backoff: 2.0  # exponential backoff multiplier
+
+  # Anthropic API configuration (for Claude models)
+  anthropic:
+    api_key: ${ANTHROPIC_API_KEY}  # Set via .env or environment variable
+    model: claude-3-5-sonnet-20241022
+    timeout: 30
+    max_retries: 3
+    retry_backoff: 2.0
+
+# Model Configuration
+models:
+  claude:
+    provider: anthropic
+    model_name: claude-3-5-sonnet-20241022
+    enabled: true
+    temperature: 0.7
+    max_tokens: 2048
+    cost_per_1k_input: 0.003    # USD
+    cost_per_1k_output: 0.015   # USD
+
+  gpt4:
+    provider: openai
+    model_name: gpt-4-turbo
+    enabled: true
+    temperature: 0.7
+    max_tokens: 2048
+    cost_per_1k_input: 0.01     # USD
+    cost_per_1k_output: 0.03    # USD
+
+  gemma:
+    provider: ollama  # or huggingface, set to local via Ollama
+    model_name: gemma:latest
+    enabled: false  # Set to true when ready
+    base_url: http://localhost:11434
+    temperature: 0.7
+    max_tokens: 2048
+    cost_per_1k_input: 0.0      # local, no cost
+    cost_per_1k_output: 0.0     # local, no cost
+
+# Pipeline Configuration
+pipeline:
+  dataset_path: datasets/original_code
+  output_base_path: outputs
+  intermediate_path: intermediate
+  prompts_path: prompts
+  cache_enabled: true
+  cache_path: intermediate/cache
+  dry_run: false  # Set to true to test without making API calls
+
+# Dataset Configuration
+dataset:
+  target_sample_count: 50  # Goal: 30-70 samples
+  include_oss: true        # Include open-source code
+  include_llm_generated: true
+  include_problematic: true
+  sample_format: py  # Python files only
+  max_file_size_bytes: 10000  # Skip files larger than ~10KB
+
+# Analysis Configuration
+analysis:
+  generate_csv: true
+  generate_json: true
+  generate_visualizations: true
+  include_embeddings: true
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  statistical_analysis: true
+
+# Evaluation Configuration
+evaluation:
+  rubric_path: evaluation_rubric.md
+  dimensions: 20  # Total scoring dimensions
+  score_scale: 10
+  critical_dimensions:  # High-weight dimensions
+    - separation_of_concerns
+    - documentation
+    - logic_clarity
+    - error_handling
+    - security_awareness
+
+# Logging Configuration
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+  log_file: logs/pipeline.log
+  log_dir: logs
+  max_log_size: 10485760  # 10MB
+  backup_count: 5
+
+# Processing Configuration
+processing:
+  sequential: true  # Process one model at a time to avoid rate limiting
+  concurrent_models: 1
+  samples_per_batch: 1  # Process one sample at a time
+  timeout_per_sample: 60  # seconds
+  max_samples_per_run: null  # null = all, or set to int for testing
+
+# Display Configuration
+ui:
+  show_progress: true
+  verbose: false
+  show_api_calls: false

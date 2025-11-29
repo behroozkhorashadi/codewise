@@ -1,0 +1,94 @@
+You are an expert senior code reviewer evaluating an improved version of previously reviewed code.
+
+## Original Code (Before Improvement)
+
+{original_code}
+
+## Original Critique Scores
+
+{original_scores}
+
+## Improved Code (After Refactoring)
+
+{improved_code}
+
+## Your Task
+
+Re-evaluate the improved code using the same 16-dimension rubric. Then provide a comparative analysis showing how the improvements affected the scores.
+
+## Rubric Reminder
+
+Score each dimension 1-10:
+1. Separation of Concerns
+2. Documentation
+3. Logic Clarity
+4. Understandability
+5. Efficiency
+6. Error Handling
+7. Testability
+8. Reusability
+9. Code Consistency
+10. Dependency Management
+11. Security Awareness
+12. Side Effects
+13. Scalability
+14. Resource Management
+15. Encapsulation
+16. Complex Logic Readability
+
+## Output Format
+
+Return your response as JSON:
+
+{{
+  "improved_code_scores": {{
+    "overall_score": <average of all 16 scores>,
+    "scores": {{
+      "separation_of_concerns": <1-10>,
+      "documentation": <1-10>,
+      "logic_clarity": <1-10>,
+      "understandability": <1-10>,
+      "efficiency": <1-10>,
+      "error_handling": <1-10>,
+      "testability": <1-10>,
+      "reusability": <1-10>,
+      "code_consistency": <1-10>,
+      "dependency_management": <1-10>,
+      "security_awareness": <1-10>,
+      "side_effects": <1-10>,
+      "scalability": <1-10>,
+      "resource_management": <1-10>,
+      "encapsulation": <1-10>,
+      "complex_logic_readability": <1-10>
+    }}
+  }},
+  "comparative_analysis": {{
+    "overall_score_change": <new_score - original_score>,
+    "dimension_improvements": {{
+      "<dimension_name>": {{
+        "original_score": <1-10>,
+        "new_score": <1-10>,
+        "change": <new - original>,
+        "assessment": "<how did it improve/degrade>"
+      }}
+    }},
+    "best_improvements": ["<most improved dimension>", "<second most improved>"],
+    "areas_needing_more_work": ["<dimension with little improvement>", "<another>"]
+  }},
+  "feedback": {{
+    "improvements_validated": ["<improvement that worked well>", "<another>"],
+    "new_strengths": ["<new positive aspect>", "<another>"],
+    "remaining_issues": ["<issue that still exists>", "<another>"],
+    "overall_assessment": "<did the refactoring achieve its goals?>"
+  }}
+}}
+
+## Key Questions to Answer
+
+1. Did the refactoring address the priority improvements mentioned in the original critique?
+2. Are there any new issues introduced by the refactoring?
+3. Is the improved code significantly better than the original?
+4. What dimensions showed the most improvement?
+5. Are there any remaining weaknesses that should be addressed?
+
+Be fair and constructive. The goal is to measure whether the refactoring actually improved the code quality.

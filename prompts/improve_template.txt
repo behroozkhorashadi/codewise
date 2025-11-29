@@ -1,0 +1,51 @@
+You are an expert code refactorer. Your task is to improve the following Python code based on the critique provided.
+
+## Original Code
+
+{code_content}
+
+## Critique from Code Review
+
+{critique}
+
+## Your Task
+
+Refactor the code to address the identified weaknesses and priority improvements. Your refactored code should:
+
+1. Address each priority improvement mentioned in the critique
+2. Follow Python best practices and PEP 8
+3. Maintain the original functionality
+4. Be well-documented with docstrings
+5. Include improved error handling where applicable
+6. Have clearer variable/function names if needed
+7. Be more modular if the original was doing too much
+
+## Output Format
+
+Return your response as JSON:
+
+{{
+  "refactored_code": "<complete refactored Python code>",
+  "changes_made": {{
+    "summary": "<one-line summary of main improvements>",
+    "detailed_changes": [
+      {{
+        "dimension": "<rubric dimension addressed>",
+        "original_issue": "<what was wrong>",
+        "how_fixed": "<how you fixed it>"
+      }}
+    ]
+  }},
+  "explanation": {{
+    "reasoning": "<explain your refactoring approach>",
+    "trade_offs": "<any trade-offs made in the refactoring>",
+    "notes": "<additional implementation notes>"
+  }}
+}}
+
+Important:
+- The refactored code must be syntactically valid Python
+- Do not change the function signature unless absolutely necessary
+- If you change the signature, clearly explain why
+- Preserve all docstring information, but improve it if needed
+- Include type hints if the original didn't have them

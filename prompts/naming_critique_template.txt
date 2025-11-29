@@ -1,0 +1,118 @@
+You are an expert in code naming conventions and readability. Your task is to evaluate and critique the variable, function, and class naming in the provided Python code.
+
+## Code to Evaluate
+
+{code_content}
+
+## Task
+
+Analyze the naming conventions used in the code across three categories:
+1. **Variable names** (local, instance, class variables)
+2. **Function and method names** (should be verbs or descriptive)
+3. **Class names** (should be nouns, PascalCase)
+
+Evaluate naming against these criteria:
+- **Clarity**: Is the name clear about what the variable/function does?
+- **Semantic Accuracy**: Does the name accurately represent the content/behavior?
+- **Convention Compliance**: Does it follow Python naming conventions (PEP 8)?
+- **Consistency**: Are similar concepts named similarly?
+- **Brevity vs. Clarity**: Is the name concise without sacrificing clarity?
+
+## Output Format
+
+Return your response as JSON:
+
+{{
+  "naming_assessment": {{
+    "overall_quality_score": <1-10>,
+    "clarity_score": <1-10>,
+    "consistency_score": <1-10>,
+    "convention_compliance_score": <1-10>
+  }},
+  "detailed_findings": {{
+    "well_named_items": [
+      {{
+        "name": "<variable/function/class name>",
+        "type": "<variable|function|class>",
+        "why_good": "<explanation of why naming is good>"
+      }}
+    ],
+    "poorly_named_items": [
+      {{
+        "name": "<current name>",
+        "type": "<variable|function|class>",
+        "issue": "<what's wrong with the name>",
+        "severity": "<minor|moderate|major>",
+        "suggested_names": ["<alternative 1>", "<alternative 2>"]
+      }}
+    ],
+    "convention_violations": [
+      {{
+        "name": "<name violating convention>",
+        "violation": "<which convention violated>",
+        "correct_form": "<how it should be named>",
+        "explanation": "<why this matters>"
+      }}
+    ]
+  }},
+  "refactoring_recommendations": {{
+    "high_priority": [
+      {{
+        "old_name": "<current name>",
+        "new_name": "<recommended name>",
+        "reason": "<why this change matters>",
+        "impact": "<how this improves code>"
+      }}
+    ],
+    "medium_priority": [
+      {{
+        "old_name": "<current name>",
+        "new_name": "<recommended name>",
+        "reason": "<why this change matters>"
+      }}
+    ],
+    "low_priority": [
+      {{
+        "old_name": "<current name>",
+        "new_name": "<recommended name>",
+        "reason": "<stylistic preference>"
+      }}
+    ]
+  }},
+  "summary": {{
+    "total_names_analyzed": <number>,
+    "well_named_percentage": <0-100>,
+    "naming_issues_found": <count>,
+    "convention_violations": <count>,
+    "overall_assessment": "<narrative assessment of naming quality>"
+  }}
+}}
+
+## Key Aspects to Evaluate
+
+1. **Variables**:
+   - Are they descriptive enough to understand their purpose?
+   - Do they use snake_case (PEP 8)?
+   - Are they concise without sacrificing clarity?
+   - Example: `user_email` is better than `ue` or `email_of_user`
+
+2. **Functions/Methods**:
+   - Do they use verbs to describe actions? (e.g., `calculate_sum`, `get_user_by_id`)
+   - Are they PEP 8 compliant (snake_case, lowercase)?
+   - Do they avoid generic names like `process`, `handle`, `do_something`?
+
+3. **Classes**:
+   - Do they use PascalCase (CapitalizedWords)?
+   - Are they nouns or noun phrases?
+   - Do they describe the concept they represent?
+
+4. **Context-Specific Issues**:
+   - Are single-letter variables used appropriately (only in small scopes like loops)?
+   - Are abbreviations overused?
+   - Are names inconsistent across similar items?
+
+## Example
+
+If you see a function named `f(x)`, mark it as:
+- **Issue**: Generic name, no context
+- **Better**: `calculate_fibonacci(n)` or `compute_factorial(number)`
