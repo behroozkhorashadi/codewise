@@ -124,7 +124,7 @@ Default is fine for testing.
 ## 5. Test with Dry Run (2 minutes)
 
 ```bash
-python -m code_wise.pipeline.batch_processor \
+python -m source.pipeline.batch_processor \
   --dry-run \
   --max-samples 2
 ```
@@ -134,7 +134,7 @@ This tests the pipeline WITHOUT calling APIs. Good for validation!
 ## 6. Run Real Pipeline (10+ minutes)
 
 ```bash
-python -m code_wise.pipeline.batch_processor \
+python -m source.pipeline.batch_processor \
   --max-samples 2
 ```
 
@@ -209,10 +209,10 @@ tail -20 logs/pipeline.log
 ### Scale Up
 ```bash
 # Process 10 samples
-python -m code_wise.pipeline.batch_processor --max-samples 10
+python -m source.pipeline.batch_processor --max-samples 10
 
 # Or resume from last run (skips already processed)
-python -m code_wise.pipeline.batch_processor --resume
+python -m source.pipeline.batch_processor --resume
 ```
 
 ### Add More Samples
@@ -226,9 +226,9 @@ python scripts/add_samples_interactive.py
 
 ```bash
 # Will generate these once Phase 5 is done:
-python code_wise/analysis/score_analyzer.py      # Compare scores
-python code_wise/analysis/naming_analyzer.py     # Naming quality
-python code_wise/analysis/visualizer.py          # Create charts
+python source/analysis/score_analyzer.py      # Compare scores
+python source/analysis/naming_analyzer.py     # Naming quality
+python source/analysis/visualizer.py          # Create charts
 ```
 
 ## Common Issues

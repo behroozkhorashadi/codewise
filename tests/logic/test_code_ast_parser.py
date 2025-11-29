@@ -3,8 +3,8 @@ import sys
 
 import pytest
 
-from code_wise.logic.code_ast_parser import return_function_text
-from code_wise.utils.parse_helper import parse_arguments
+from source.logic.code_ast_parser import return_function_text
+from source.utils.parse_helper import parse_arguments
 
 
 def test_return_function_text():

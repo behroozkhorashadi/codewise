@@ -5,13 +5,13 @@ import sys
 # Add the current directory to the path so we can import our modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from code_wise.logic.code_ast_parser import collect_method_usages
+from source.logic.code_ast_parser import collect_method_usages
 
 
 def test_specific_file():
     # Test with the specific file that's causing issues
     root_dir = "/Users/ahmadkhorashadi/code_projects/codewise"
-    test_file = "/Users/ahmadkhorashadi/code_projects/codewise/code_wise/logic/analyze_cognitive_complexity.py"
+    test_file = "/Users/ahmadkhorashadi/code_projects/codewise/source/logic/analyze_cognitive_complexity.py"
 
     print(f"Testing parsing of: {test_file}")
 

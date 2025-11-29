@@ -24,9 +24,9 @@ Track your progress through the research pipeline phases.
 - [x] Naming critique template → `prompts/naming_critique_template.txt`
 
 ### Phase 4: Pipeline Core
-- [x] LLM integration layer → `code_wise/pipeline/model_api.py`
-- [x] Sample processor → `code_wise/pipeline/sample_processor.py`
-- [x] Batch processor → `code_wise/pipeline/batch_processor.py`
+- [x] LLM integration layer → `source/pipeline/model_api.py`
+- [x] Sample processor → `source/pipeline/sample_processor.py`
+- [x] Batch processor → `source/pipeline/batch_processor.py`
 - [x] CLI interface → `--help` in batch_processor.py
 
 ### Documentation
@@ -291,8 +291,8 @@ Track your progress through the research pipeline phases.
    - [ ] Verify all samples processed
 
 4. **Test Pipeline** (30 minutes)
-   - [ ] Dry run: `python -m code_wise.pipeline.batch_processor --dry-run --max-samples 2`
-   - [ ] Real run: `python -m code_wise.pipeline.batch_processor --max-samples 2`
+   - [ ] Dry run: `python -m source.pipeline.batch_processor --dry-run --max-samples 2`
+   - [ ] Real run: `python -m source.pipeline.batch_processor --max-samples 2`
    - [ ] Check outputs in `outputs/{claude,gpt4}/`
 
 **Time estimate**: 3-4 hours
@@ -305,7 +305,7 @@ Track your progress through the research pipeline phases.
    - [ ] Aim for 30-50 total
 
 6. **Run Full Pipeline** (2-3 hours active time, 4-8 hours API processing)
-   - [ ] Run on all samples: `python -m code_wise.pipeline.batch_processor --resume`
+   - [ ] Run on all samples: `python -m source.pipeline.batch_processor --resume`
    - [ ] Monitor progress
    - [ ] Check outputs
 

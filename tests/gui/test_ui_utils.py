@@ -7,7 +7,7 @@ from PySide6.QtCore import QTimer
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QApplication
 
-from code_wise.codewise_gui.codewise_ui_utils import AnalysisWorker, CodewiseApp, LoadingSpinner
+from source.codewise_gui.codewise_ui_utils import AnalysisWorker, CodewiseApp, LoadingSpinner
 
 # Global QApplication instance for all tests
 _qapp = None
@@ -126,8 +126,8 @@ class TestAnalysisWorker:
         assert worker.root_directory == "/test/root"
         assert worker.file_path == "/test/file.py"
 
-    @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages')
-    @patch('code_wise.codewise_gui.codewise_ui_utils.get_method_ratings')
+    @patch('source.codewise_gui.codewise_ui_utils.collect_method_usages')
+    @patch('source.codewise_gui.codewise_ui_utils.get_method_ratings')
     def test_worker_successful_analysis(self, mock_get_ratings, mock_collect_usages):
         """Test successful analysis workflow"""
         # Mock the method collection
@@ -143,7 +143,7 @@ class TestAnalysisWorker:
         mock_get_ratings.return_value = "Test API response"
 
         # Mock get_method_body
-        with patch('code_wise.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
+        with patch('source.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
             mock_get_body.return_value = "def test_method(): pass"
 
             worker = AnalysisWorker("/test/root", "/test/file.py")
@@ -165,7 +165,7 @@ class TestAnalysisWorker:
             assert api_response_signal.called
             assert finished_signal.called
 
-    @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages')
+    @patch('source.codewise_gui.codewise_ui_utils.collect_method_usages')
     def test_worker_no_methods_found(self, mock_collect_usages):
         """Test worker behavior when no methods are found"""
         mock_collect_usages.return_value = {}
@@ -184,7 +184,7 @@ class TestAnalysisWorker:
         call_args = error_signal.call_args[0][0]
         assert "No methods found in the specified file" in call_args
 
-    @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages')
+    @patch('source.codewise_gui.codewise_ui_utils.collect_method_usages')
     def test_worker_exception_handling(self, mock_collect_usages):
         """Test worker exception handling"""
         mock_collect_usages.side_effect = Exception("Test error")
@@ -203,8 +203,8 @@ class TestAnalysisWorker:
         call_args = error_signal.call_args[0][0]
         assert "Error during analysis" in call_args
 
-    @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages_entire_project')
-    @patch('code_wise.codewise_gui.codewise_ui_utils.get_method_ratings')
+    @patch('source.codewise_gui.codewise_ui_utils.collect_method_usages_entire_project')
+    @patch('source.codewise_gui.codewise_ui_utils.get_method_ratings')
     def test_worker_entire_project_analysis(self, mock_get_ratings, mock_collect_entire_project):
         """Test entire project analysis workflow"""
         # Mock the method collection for entire project
@@ -223,7 +223,7 @@ class TestAnalysisWorker:
         mock_get_ratings.return_value = "Test API response"
 
         # Mock get_method_body
-        with patch('code_wise.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
+        with patch('source.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
             mock_get_body.return_value = "def test_method(): pass"
 
             worker = AnalysisWorker("/test/root", analysis_mode="entire_project")
@@ -245,7 +245,7 @@ class TestAnalysisWorker:
             assert api_response_signal.called
             assert finished_signal.called
 
-    @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages_entire_project')
+    @patch('source.codewise_gui.codewise_ui_utils.collect_method_usages_entire_project')
     def test_worker_entire_project_no_methods_found(self, mock_collect_entire_project):
         """Test worker behavior when no methods are found in entire project"""
         mock_collect_entire_project.return_value = {}
@@ -286,9 +286,9 @@ class TestAnalysisWorker:
 
     def test_collect_method_usages_entire_project(self):
         """Test the collect_method_usages_entire_project function"""
-        from code_wise.codewise_gui.codewise_ui_utils import collect_method_usages_entire_project
+        from source.codewise_gui.codewise_ui_utils import collect_method_usages_entire_project
 
-        with patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages') as mock_collect:
+        with patch('source.codewise_gui.codewise_ui_utils.collect_method_usages') as mock_collect:
             # Mock the collect_method_usages function
             mock_method_pointer = Mock()
             mock_method_pointer.file_path = "/test/file.py"
@@ -307,8 +307,8 @@ class TestAnalysisWorker:
                 assert len(result) > 0
                 assert "/test/file.py:test_method" in result
 
-    @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages')
-    @patch('code_wise.codewise_gui.codewise_ui_utils.get_method_ratings')
+    @patch('source.codewise_gui.codewise_ui_utils.collect_method_usages')
+    @patch('source.codewise_gui.codewise_ui_utils.get_method_ratings')
     def test_worker_processes_all_methods_single_file(self, mock_get_ratings, mock_collect_usages):
         """Test that the worker processes all methods in single file mode, not just the first one"""
         # Mock multiple method pointers
@@ -343,7 +343,7 @@ class TestAnalysisWorker:
         ]
 
         # Mock get_method_body
-        with patch('code_wise.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
+        with patch('source.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
             mock_get_body.return_value = "def test_method(): pass"
 
             worker = AnalysisWorker("/test/root", "/test/file.py")
@@ -379,8 +379,8 @@ class TestAnalysisWorker:
             # Verify finished signal was emitted
             assert finished_signal.called
 
-    @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages')
-    @patch('code_wise.codewise_gui.codewise_ui_utils.get_method_ratings')
+    @patch('source.codewise_gui.codewise_ui_utils.collect_method_usages')
+    @patch('source.codewise_gui.codewise_ui_utils.get_method_ratings')
     def test_worker_processes_methods_in_classes(self, mock_get_ratings, mock_collect_usages):
         """Test that the worker processes methods inside classes as well as standalone functions"""
         # Mock method pointers for both class methods and standalone functions
@@ -406,7 +406,7 @@ class TestAnalysisWorker:
         mock_get_ratings.side_effect = ["API response for class method", "API response for standalone function"]
 
         # Mock get_method_body
-        with patch('code_wise.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
+        with patch('source.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
             mock_get_body.return_value = "def test_method(): pass"
 
             worker = AnalysisWorker("/test/root", "/test/file.py")
@@ -437,8 +437,8 @@ class TestAnalysisWorker:
             assert any("Analysis for method: class_method" in call for call in api_response_calls)
             assert any("Analysis for method: standalone_function" in call for call in api_response_calls)
 
-    @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages')
-    @patch('code_wise.codewise_gui.codewise_ui_utils.get_method_ratings')
+    @patch('source.codewise_gui.codewise_ui_utils.collect_method_usages')
+    @patch('source.codewise_gui.codewise_ui_utils.get_method_ratings')
     def test_worker_handles_api_errors_gracefully(self, mock_get_ratings, mock_collect_usages):
         """Test that the worker continues processing other methods even if one API call fails"""
         # Mock multiple method pointers
@@ -464,7 +464,7 @@ class TestAnalysisWorker:
         mock_get_ratings.side_effect = [Exception("API Error for method 1"), "API response for method 2"]
 
         # Mock get_method_body
-        with patch('code_wise.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
+        with patch('source.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
             mock_get_body.return_value = "def test_method(): pass"
 
             worker = AnalysisWorker("/test/root", "/test/file.py")
@@ -499,7 +499,7 @@ class TestAnalysisWorker:
             # Verify finished signal was emitted
             assert finished_signal.called
 
-    @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages')
+    @patch('source.codewise_gui.codewise_ui_utils.collect_method_usages')
     def test_worker_cancellation_stops_processing(self, mock_collect_usages):
         """Test that cancellation stops processing of remaining methods"""
         # Mock multiple method pointers
@@ -527,7 +527,7 @@ class TestAnalysisWorker:
         }
 
         # Mock get_method_body
-        with patch('code_wise.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
+        with patch('source.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
             mock_get_body.return_value = "def test_method(): pass"
 
             worker = AnalysisWorker("/test/root", "/test/file.py")
@@ -571,8 +571,8 @@ class TestAnalysisWorker:
                 # Verify finished signal was not emitted (due to cancellation)
                 assert not finished_signal.called
 
-    @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages')
-    @patch('code_wise.codewise_gui.codewise_ui_utils.get_method_ratings')
+    @patch('source.codewise_gui.codewise_ui_utils.collect_method_usages')
+    @patch('source.codewise_gui.codewise_ui_utils.get_method_ratings')
     def test_worker_processes_methods_with_usage_examples(self, mock_get_ratings, mock_collect_usages):
         """Test that the worker correctly processes methods with their usage examples"""
         # Mock method pointer
@@ -596,7 +596,7 @@ class TestAnalysisWorker:
         mock_get_ratings.return_value = "Test API response"
 
         # Mock get_method_body to return different content for method and usages
-        with patch('code_wise.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
+        with patch('source.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
 
             def get_method_body_side_effect(node, file_path):
                 if file_path == "/test/file.py":
@@ -639,8 +639,8 @@ class TestAnalysisWorker:
             # Verify finished signal was emitted
             assert finished_signal.called
 
-    @patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages')
-    @patch('code_wise.codewise_gui.codewise_ui_utils.get_method_ratings')
+    @patch('source.codewise_gui.codewise_ui_utils.collect_method_usages')
+    @patch('source.codewise_gui.codewise_ui_utils.get_method_ratings')
     def test_worker_verifies_no_break_statement_behavior(self, mock_get_ratings, mock_collect_usages):
         """Test that the worker processes ALL methods, not just the first one (verifying the fix)"""
         # Mock multiple method pointers to simulate a file with many methods
@@ -662,7 +662,7 @@ class TestAnalysisWorker:
         mock_get_ratings.side_effect = [f"API response for method_{i}" for i in range(5)]
 
         # Mock get_method_body
-        with patch('code_wise.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
+        with patch('source.codewise_gui.codewise_ui_utils.get_method_body') as mock_get_body:
             mock_get_body.return_value = "def test_method(): pass"
 
             worker = AnalysisWorker("/test/root", "/test/file.py")
@@ -764,7 +764,7 @@ class TestCodewiseApp:
             # Should show warning for empty fields
             assert mock_warning.called
 
-    @patch('code_wise.codewise_gui.codewise_ui_utils.AnalysisWorker')
+    @patch('source.codewise_gui.codewise_ui_utils.AnalysisWorker')
     def test_on_submit_success(self, mock_worker_class):
         """Test successful submit workflow"""
         app = get_qapp()
@@ -972,7 +972,7 @@ class TestCodewiseApp:
 
         # Test with both root directory and file path
         codewise_app.file_path_entry.setText("/test/file.py")
-        with patch('code_wise.codewise_gui.codewise_ui_utils.AnalysisWorker') as mock_worker_class:
+        with patch('source.codewise_gui.codewise_ui_utils.AnalysisWorker') as mock_worker_class:
             mock_worker = Mock()
             mock_worker_class.return_value = mock_worker
 
@@ -991,7 +991,7 @@ class TestCodewiseApp:
         codewise_app.root_dir_entry.setText("/test/root")
 
         # Test with root directory only
-        with patch('code_wise.codewise_gui.codewise_ui_utils.AnalysisWorker') as mock_worker_class:
+        with patch('source.codewise_gui.codewise_ui_utils.AnalysisWorker') as mock_worker_class:
             mock_worker = Mock()
             mock_worker_class.return_value = mock_worker
 
@@ -1039,7 +1039,7 @@ class TestCodewiseApp:
 
         from PySide6.QtWidgets import QApplication
 
-        from code_wise.codewise_gui.codewise_ui_utils import AnalysisWorker, CodewiseApp
+        from source.codewise_gui.codewise_ui_utils import AnalysisWorker, CodewiseApp
 
         app = QApplication.instance() or QApplication([])
         codewise_app = CodewiseApp()
@@ -1059,7 +1059,7 @@ class TestCodewiseApp:
             mock_process_methods.side_effect = long_running_process_methods
 
             # Patch collect_method_usages to return a fake method
-            with patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages') as mock_collect:
+            with patch('source.codewise_gui.codewise_ui_utils.collect_method_usages') as mock_collect:
                 mock_method_pointer = MagicMock()
                 mock_method_pointer.method_id.method_name = "test_method"
                 mock_method_pointer.file_path = "/fake/file.py"
@@ -1103,7 +1103,7 @@ class TestCodewiseApp:
 
         from PySide6.QtWidgets import QApplication
 
-        from code_wise.codewise_gui.codewise_ui_utils import AnalysisWorker, CodewiseApp
+        from source.codewise_gui.codewise_ui_utils import AnalysisWorker, CodewiseApp
 
         app = QApplication.instance() or QApplication([])
         codewise_app = CodewiseApp()
@@ -1129,7 +1129,7 @@ class TestCodewiseApp:
             mock_process_methods.side_effect = quick_process_methods
 
             # Patch collect_method_usages to return a fake method
-            with patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages') as mock_collect:
+            with patch('source.codewise_gui.codewise_ui_utils.collect_method_usages') as mock_collect:
                 mock_method_pointer = MagicMock()
                 mock_method_pointer.method_id.method_name = "test_method"
                 mock_method_pointer.file_path = "/fake/file.py"
@@ -1161,13 +1161,17 @@ class TestCodewiseApp:
                 assert codewise_app.root_dir_entry.isEnabled() is True
                 assert codewise_app.file_path_entry.isEnabled() is True
 
+                # Wait for the worker thread to finish to avoid QThread destroyed while running error
+                if codewise_app.worker:
+                    codewise_app.worker.wait()
+
     def test_input_controls_re_enabled_after_cancellation(self):
         """Test that browse buttons and text input boxes are re-enabled after cancellation."""
         from unittest.mock import MagicMock, patch
 
         from PySide6.QtWidgets import QApplication
 
-        from code_wise.codewise_gui.codewise_ui_utils import AnalysisWorker, CodewiseApp
+        from source.codewise_gui.codewise_ui_utils import AnalysisWorker, CodewiseApp
 
         app = QApplication.instance() or QApplication([])
         codewise_app = CodewiseApp()
@@ -1187,7 +1191,7 @@ class TestCodewiseApp:
             mock_process_methods.side_effect = long_running_process_methods
 
             # Patch collect_method_usages to return a fake method
-            with patch('code_wise.codewise_gui.codewise_ui_utils.collect_method_usages') as mock_collect:
+            with patch('source.codewise_gui.codewise_ui_utils.collect_method_usages') as mock_collect:
                 mock_method_pointer = MagicMock()
                 mock_method_pointer.method_id.method_name = "test_method"
                 mock_method_pointer.file_path = "/fake/file.py"

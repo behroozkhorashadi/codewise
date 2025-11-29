@@ -15,10 +15,10 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
-from code_wise.pipeline.cache_manager import CacheManager
-from code_wise.pipeline.model_api import ClaudeReviewer, GemmaReviewer, GPT4Reviewer
-from code_wise.pipeline.pipeline_logger import PipelineLogger
-from code_wise.pipeline.sample_processor import SampleProcessor
+from source.pipeline.cache_manager import CacheManager
+from source.pipeline.model_api import ClaudeReviewer, GemmaReviewer, GPT4Reviewer
+from source.pipeline.pipeline_logger import PipelineLogger
+from source.pipeline.sample_processor import SampleProcessor
 
 
 class BatchProcessor:

@@ -53,13 +53,13 @@ python scripts/preprocess_samples.py
 ### Step 4: Test Pipeline (No Cost - 2 minutes)
 
 ```bash
-python -m code_wise.pipeline.batch_processor --dry-run --max-samples 2
+python -m source.pipeline.batch_processor --dry-run --max-samples 2
 ```
 
 ### Step 5: Run Real Pipeline (10+ minutes)
 
 ```bash
-python -m code_wise.pipeline.batch_processor --max-samples 2
+python -m source.pipeline.batch_processor --max-samples 2
 ```
 
 Check results:
@@ -108,13 +108,13 @@ python scripts/add_samples_interactive.py
 python scripts/preprocess_samples.py
 
 # Test pipeline (no API costs, instant)
-python -m code_wise.pipeline.batch_processor --dry-run --max-samples 2
+python -m source.pipeline.batch_processor --dry-run --max-samples 2
 
 # Run on limited samples (for testing)
-python -m code_wise.pipeline.batch_processor --max-samples 10
+python -m source.pipeline.batch_processor --max-samples 10
 
 # Resume from previous run (skip already processed)
-python -m code_wise.pipeline.batch_processor --resume
+python -m source.pipeline.batch_processor --resume
 
 # View logs in real-time
 tail -f logs/pipeline.log
@@ -180,7 +180,7 @@ codewise/
 │   ├── gpt4/
 │   └── analysis/  (TODO)
 │
-├── code_wise/pipeline/        ← Core pipeline code
+├── source/pipeline/        ← Core pipeline code
 └── scripts/                   ← Helper scripts
 ```
 

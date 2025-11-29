@@ -44,7 +44,7 @@ pytest tests/gui/test_ui_utils.py
 pytest tests/gui/test_ui_utils.py::TestAnalysisWorker::test_worker_processes_all_methods_single_file
 
 # Run with coverage
-pytest --cov=code_wise --cov-report=html
+pytest --cov=source --cov-report=html
 ```
 
 ### Linting and Formatting
@@ -63,18 +63,18 @@ isort .
 
 ### Core Components
 
-**AST-based Analysis Pipeline (`code_wise/logic/code_ast_parser.py`)**
+**AST-based Analysis Pipeline (`source/logic/code_ast_parser.py`)**
 - `MethodUsageCollector`: Main visitor class that walks Python AST to collect method definitions and their call sites
 - Uses parent pointers in AST nodes to find enclosing functions for each method call
 - Resolves module imports and method identifiers to track cross-file method usage
 - Returns `MethodPointer` objects (method definition + file location) mapped to `CallSiteInfo` lists (usage examples with context)
 
-**LLM Integration (`code_wise/llm/`)**
+**LLM Integration (`source/llm/`)**
 - `llm_integration.py`: OpenAI API wrapper with error handling
 - `code_eval_prompt.py`: Prompt template defining 16 quality criteria for method evaluation
 - Sends method body + up to 10 usage examples to GPT-4 for scoring (1-10) and feedback
 
-**GUI Application (`code_wise/codewise_gui/codewise_ui_utils.py`)**
+**GUI Application (`source/codewise_gui/codewise_ui_utils.py`)**
 - `CodewiseApp`: Main Qt widget with two analysis modes:
   - Single File Mode: Analyzes all methods in one file
   - Entire Project Mode: Walks directory tree and analyzes all Python files
@@ -96,7 +96,7 @@ isort .
 - Required for extracting usage context (the function that calls a method)
 
 **Progressive Processing**
-- Methods are processed sequentially in a loop (NO break statements - see code_wise/codewise_gui/codewise_ui_utils.py:247-295)
+- Methods are processed sequentially in a loop (NO break statements - see source/codewise_gui/codewise_ui_utils.py:247-295)
 - Each method emits separate signals: progress updates, API responses
 - UI displays results incrementally rather than waiting for batch completion
 
@@ -118,7 +118,7 @@ isort .
 
 2. **API call rate limiting**: Worker processes methods sequentially (not in parallel) to avoid overwhelming OpenAI API
 
-3. **Usage example sampling**: `collect_method_usages()` randomly samples up to 10 usage examples per method (code_wise/logic/code_ast_parser.py:244)
+3. **Usage example sampling**: `collect_method_usages()` randomly samples up to 10 usage examples per method (source/logic/code_ast_parser.py:244)
 
 4. **Mock QMessageBox in tests**: Always patch QMessageBox methods in GUI tests to prevent actual popup dialogs that would block pytest
 
@@ -127,7 +127,7 @@ isort .
 ## File Structure
 
 ```
-code_wise/
+source/
 ├── logic/              # AST parsing and cognitive complexity analysis
 ├── llm/                # LLM integration and prompt templates
 ├── codewise_gui/       # PySide6 GUI components

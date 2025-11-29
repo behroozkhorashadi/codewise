@@ -26,12 +26,12 @@
   - `outputs/analysis/` → Analysis results
 
 #### 1.3: Caching & Logging System ✅
-- **Cache Manager** (`code_wise/pipeline/cache_manager.py`):
+- **Cache Manager** (`source/pipeline/cache_manager.py`):
   - Deterministic hash-based caching
   - Avoids redundant API calls
   - Saves money on reprocessing
 
-- **Pipeline Logger** (`code_wise/pipeline/pipeline_logger.py`):
+- **Pipeline Logger** (`source/pipeline/pipeline_logger.py`):
   - Structured logging to file + console
   - JSONL API call tracking
   - Cost estimation
@@ -83,7 +83,7 @@
 ### Phase 4: Pipeline Core ✅
 
 #### 4.1: LLM Integration Layer ✅
-- **File**: `code_wise/pipeline/model_api.py`
+- **File**: `source/pipeline/model_api.py`
 - **Classes**:
   - `CodeReviewModel` (abstract base)
   - `ClaudeReviewer` (Anthropic API)
@@ -97,7 +97,7 @@
   - Template loading
 
 #### 4.2: Sample Processor ✅
-- **File**: `code_wise/pipeline/sample_processor.py`
+- **File**: `source/pipeline/sample_processor.py`
 - **Functionality**:
   - Processes single sample through 3-phase pipeline
   - Critique → Improve → Re-critique workflow
@@ -105,7 +105,7 @@
   - Saves outputs at each phase as JSON
 
 #### 4.3: Batch Processor + CLI ✅
-- **File**: `code_wise/pipeline/batch_processor.py`
+- **File**: `source/pipeline/batch_processor.py`
 - **Features**:
   - Loads YAML configuration
   - Initializes multiple models
@@ -161,10 +161,10 @@ python scripts/add_samples_interactive.py
 python scripts/preprocess_samples.py
 
 # 4. Test with dry run (no API costs)
-python -m code_wise.pipeline.batch_processor --dry-run --max-samples 2
+python -m source.pipeline.batch_processor --dry-run --max-samples 2
 
 # 5. Run real pipeline
-python -m code_wise.pipeline.batch_processor --max-samples 2
+python -m source.pipeline.batch_processor --max-samples 2
 ```
 
 Expected time: **20-30 minutes**
@@ -209,7 +209,7 @@ Research Results & Report
 
 ### Core Pipeline Code
 ```
-code_wise/pipeline/
+source/pipeline/
 ├── __init__.py                  (250 bytes)
 ├── cache_manager.py             (4.2 KB)
 ├── pipeline_logger.py           (5.8 KB)
@@ -335,10 +335,10 @@ pytest tests/pipeline/test_batch_processor.py
 ### Manual Testing
 ```bash
 # 1. Dry run (no costs)
-python -m code_wise.pipeline.batch_processor --dry-run
+python -m source.pipeline.batch_processor --dry-run
 
 # 2. Single sample
-python -m code_wise.pipeline.batch_processor --max-samples 1
+python -m source.pipeline.batch_processor --max-samples 1
 
 # 3. Check outputs
 ls -la outputs/claude/
@@ -415,7 +415,7 @@ Example cost breakdown for 50 samples:
 | `config.yaml` | Configuration | Before first run |
 | `scripts/add_samples_interactive.py` | Add samples | Dataset curation |
 | `scripts/preprocess_samples.py` | Preprocess | Before pipeline run |
-| `code_wise/pipeline/batch_processor.py` | Run pipeline | After samples ready |
+| `source/pipeline/batch_processor.py` | Run pipeline | After samples ready |
 
 ---
 

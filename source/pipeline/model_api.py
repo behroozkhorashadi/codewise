@@ -14,8 +14,8 @@ from typing import Any, Dict, Optional
 import anthropic
 import openai
 
-from code_wise.pipeline.cache_manager import CacheManager
-from code_wise.pipeline.pipeline_logger import get_logger
+from source.pipeline.cache_manager import CacheManager
+from source.pipeline.pipeline_logger import get_logger
 
 logger = get_logger(__name__)
 

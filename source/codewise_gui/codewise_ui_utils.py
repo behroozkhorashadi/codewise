@@ -24,9 +24,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from code_wise.llm.code_eval_prompt import generate_code_evaluation_prompt
-from code_wise.llm.llm_integration import get_method_ratings
-from code_wise.logic.code_ast_parser import collect_method_usages, get_method_body
+from source.llm.code_eval_prompt import generate_code_evaluation_prompt
+from source.llm.llm_integration import get_method_ratings
+from source.logic.code_ast_parser import collect_method_usages, get_method_body
 
 
 class CancellableAPICall:

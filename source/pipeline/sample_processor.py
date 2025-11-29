@@ -14,8 +14,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from code_wise.pipeline.model_api import CodeReviewModel
-from code_wise.pipeline.pipeline_logger import PipelineLogger, get_logger
+from source.pipeline.model_api import CodeReviewModel
+from source.pipeline.pipeline_logger import PipelineLogger, get_logger
 
 logger = get_logger(__name__)
 

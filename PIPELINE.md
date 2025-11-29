@@ -43,7 +43,7 @@ codewise/
 ├── DATASET_GUIDE.md               # How to curate the dataset
 ├── PIPELINE.md                    # This file
 │
-├── code_wise/
+├── source/
 │   └── pipeline/                  # Core pipeline module
 │       ├── __init__.py
 │       ├── cache_manager.py       # Cache for API responses
@@ -120,21 +120,21 @@ Defines 20 dimensions for evaluating code quality:
 - Refactoring Quality
 - Rubric Alignment
 
-### 2. Cache Manager (`cache_manager.py`)
+### 2. Cache Manager (`source/pipeline/cache_manager.py`)
 
 Caches LLM API responses to avoid redundant calls:
 - Deterministic hash-based cache keys
 - JSON file storage
 - Statistics tracking
 
-### 3. Pipeline Logger (`pipeline_logger.py`)
+### 3. Pipeline Logger (`source/pipeline/pipeline_logger.py`)
 
 Tracks execution and API calls:
 - Structured logging to files and console
 - JSONL format for API call tracking
 - Cost estimation
 
-### 4. Model API (`model_api.py`)
+### 4. Model API (`source/pipeline/model_api.py`)
 
 Abstract interface + implementations for LLM models:
 - `CodeReviewModel`: Abstract base class
@@ -147,7 +147,7 @@ Each model implements:
 - `improve(code, critique)`: Suggest improvements
 - `recritique(original, improved, original_critique)`: Compare versions
 
-### 5. Sample Processor (`sample_processor.py`)
+### 5. Sample Processor (`source/pipeline/sample_processor.py`)
 
 Processes a single sample through the 3-phase pipeline:
 1. Load code sample
@@ -155,7 +155,7 @@ Processes a single sample through the 3-phase pipeline:
 3. Save outputs at each phase
 4. Handle errors gracefully
 
-### 6. Batch Processor (`batch_processor.py`)
+### 6. Batch Processor (`source/pipeline/batch_processor.py`)
 
 Orchestrates processing across multiple samples and models:
 - Loads configuration
@@ -233,14 +233,14 @@ Output: `intermediate/parsed_code_metadata.json`
 
 **Dry run (test without API calls)**:
 ```bash
-python -m code_wise.pipeline.batch_processor \
+python -m source.pipeline.batch_processor \
   --dry-run \
   --max-samples 2
 ```
 
 **Full run**:
 ```bash
-python -m code_wise.pipeline.batch_processor \
+python -m source.pipeline.batch_processor \
   --config config.yaml \
   --dataset datasets/original_code \
   --output outputs \
@@ -249,7 +249,7 @@ python -m code_wise.pipeline.batch_processor \
 
 **Resume from previous run**:
 ```bash
-python -m code_wise.pipeline.batch_processor --resume
+python -m source.pipeline.batch_processor --resume
 ```
 
 **Options**:
@@ -265,21 +265,21 @@ python -m code_wise.pipeline.batch_processor --resume
 
 **Score Comparison** (Phase 5.1):
 ```bash
-python code_wise/analysis/score_analyzer.py
+python source/analysis/score_analyzer.py
 ```
 
 Output: `outputs/analysis/score_comparison.csv`
 
 **Naming Analysis** (Phase 5.2):
 ```bash
-python code_wise/analysis/naming_analyzer.py
+python source/analysis/naming_analyzer.py
 ```
 
 Output: `outputs/analysis/naming_improvements.json`
 
 **Generate Visualizations** (Phase 5.4):
 ```bash
-python code_wise/analysis/visualizer.py
+python source/analysis/visualizer.py
 ```
 
 Output: Charts and interactive HTML reports
@@ -495,7 +495,7 @@ wc -l intermediate/cache/*.json
 **Monitor API costs**:
 ```bash
 python -c "
-from code_wise.pipeline import PipelineLogger
+from source.pipeline import PipelineLogger
 logger = PipelineLogger()
 stats = logger.get_api_call_summary()
 print(f\"Total cost: \${stats['total_cost_usd']:.2f}\")

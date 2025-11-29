@@ -24,7 +24,8 @@ dev-dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["code_wise"]
+packages = ["source"]
+package-dir = {"source" = "source"}
 
 [tool.isort]
 profile = "black"
