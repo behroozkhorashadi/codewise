@@ -23,7 +23,9 @@ from PySide6.QtWidgets import (
 
 from source.llm.code_eval_prompt import generate_code_evaluation_prompt
 from source.llm.llm_integration import get_method_ratings
+from source.llm.response_parser import format_structured_response, parse_json_response
 from source.logic.code_ast_parser import collect_method_usages, get_method_body
+from source.utils.output_storage import AnalysisOutputStorage
 
 
 class CancellableAPICall:
@@ -204,6 +206,7 @@ class AnalysisWorker(QThread):
         self.analysis_mode = analysis_mode
         self._is_cancelled = False
         self._api_call = CancellableAPICall()
+        self._output_storage = AnalysisOutputStorage()
 
     def cancel(self):
         """Cancel the analysis."""
@@ -278,10 +281,22 @@ class AnalysisWorker(QThread):
 
                 self.progress.emit(f"API call completed for {method_name}")
 
-                all_results.append({"method_name": method_name, "api_response": api_response})
+                # Parse structured JSON response
+                parsed_response = parse_json_response(api_response)
 
-                # Emit individual API response for popup
-                self.api_response.emit(f"Analysis for method: {method_name}\n\n{api_response}")
+                all_results.append(
+                    {
+                        "method_name": method_name,
+                        "raw_response": api_response,
+                        "structured_response": parsed_response,
+                    }
+                )
+
+                # Format and emit individual API response for display
+                formatted_display = (
+                    f"Analysis for method: {method_name}\n\n{format_structured_response(parsed_response)}"
+                )
+                self.api_response.emit(formatted_display)
 
             except CancelledError:
                 self.progress.emit(f"API call cancelled for {method_name}")
@@ -290,6 +305,20 @@ class AnalysisWorker(QThread):
                 self.progress.emit(f"Error calling API for {method_name}: {str(e)}")
 
         self.progress.emit(f"Processed {len(all_results)} methods")
+
+        # Save results to file if we processed any methods
+        if all_results and not self._is_cancelled:
+            try:
+                output_path = self._output_storage.save_analysis_output(
+                    self.root_directory,
+                    self.file_path,
+                    self.analysis_mode,
+                    all_results,
+                    metadata={"method_count": len(all_results)},
+                )
+                self.progress.emit(f"Analysis results saved to: {output_path}")
+            except Exception as e:
+                self.progress.emit(f"Warning: Failed to save analysis results: {str(e)}")
 
     def _process_entire_project(self, result):
         """Process methods for entire project analysis."""
@@ -347,17 +376,24 @@ class AnalysisWorker(QThread):
 
                     self.progress.emit(f"API call completed for {method_name}")
 
+                    # Parse structured JSON response
+                    parsed_response = parse_json_response(api_response)
+
                     all_results.append(
                         {
                             "method_name": method_name,
                             "file_path": method_pointer.file_path,
-                            "api_response": api_response,
+                            "raw_response": api_response,
+                            "structured_response": parsed_response,
                         }
                     )
                     processed_methods += 1
 
-                    # Emit individual API response for popup
-                    self.api_response.emit(f"Analysis for method: {method_name}\n\n{api_response}")
+                    # Format and emit individual API response for display
+                    formatted_display = (
+                        f"Analysis for method: {method_name}\n\n{format_structured_response(parsed_response)}"
+                    )
+                    self.api_response.emit(formatted_display)
 
                 except CancelledError:
                     self.progress.emit(f"API call cancelled for {method_name}")
@@ -370,6 +406,20 @@ class AnalysisWorker(QThread):
                 self.progress.emit(f"Progress: {processed_methods}/{total_methods} methods ({progress_percent:.1f}%)")
 
         self.progress.emit(f"Total analysis completed. Processed {len(all_results)} methods.")
+
+        # Save results to file if we processed any methods
+        if all_results and not self._is_cancelled:
+            try:
+                output_path = self._output_storage.save_analysis_output(
+                    self.root_directory,
+                    self.file_path,
+                    self.analysis_mode,
+                    all_results,
+                    metadata={"method_count": len(all_results), "file_count": len(methods_by_file)},
+                )
+                self.progress.emit(f"Analysis results saved to: {output_path}")
+            except Exception as e:
+                self.progress.emit(f"Warning: Failed to save analysis results: {str(e)}")
 
 
 class CodewiseApp(QWidget):
@@ -448,6 +498,7 @@ class CodewiseApp(QWidget):
         self.spinner = None  # Will be set in init_ui
         self.worker = None  # Keep reference to worker
         self.analysis_mode = "single_file"  # Default mode
+        self._output_storage = AnalysisOutputStorage()  # For checking cached results
 
         self.init_ui()
 
@@ -657,6 +708,54 @@ class CodewiseApp(QWidget):
                 return
         else:
             file_path = None
+
+        # Check if analysis output already exists
+        if self._output_storage.output_exists(root_directory, file_path, self.analysis_mode):
+            output_path = self._output_storage.get_analysis_output_path(root_directory, file_path, self.analysis_mode)
+            cached_data = self._output_storage.load_analysis_output(root_directory, file_path, self.analysis_mode)
+
+            if cached_data:
+                result_count = len(cached_data.get("results", []))
+                timestamp = cached_data.get("timestamp", "unknown")
+
+                reply = QMessageBox.question(
+                    self,
+                    "Analysis Results Exist",
+                    f"Analysis results already exist for this configuration.\n\n"
+                    f"Cached results: {result_count} methods\n"
+                    f"Saved on: {timestamp}\n\n"
+                    f"Do you want to:\n"
+                    f"- Click 'Yes' to use cached results\n"
+                    f"- Click 'No' to re-run the analysis",
+                    QMessageBox.Yes | QMessageBox.No,
+                )
+
+                if reply == QMessageBox.Yes:
+                    # Load and display cached results
+                    self.output_text.append(f"Loading cached analysis results from: {output_path}\n")
+                    self.output_text.append(f"Found {result_count} analyzed methods\n\n")
+
+                    # Display cached results
+                    for result in cached_data.get("results", []):
+                        method_name = result.get("method_name", "Unknown")
+
+                        # Handle both old (raw_response only) and new (structured_response) formats
+                        if "structured_response" in result:
+                            structured = result.get("structured_response", {})
+                            formatted_display = (
+                                f"Analysis for method: {method_name}\n\n{format_structured_response(structured)}"
+                            )
+                        else:
+                            # Fallback for old cache format
+                            api_response = result.get("api_response", "No response")
+                            formatted_display = f"Analysis for method: {method_name}\n\n{api_response}"
+
+                        self.api_response_text.setText(formatted_display)
+                        self.output_text.append(f"Loaded: {method_name}\n")
+
+                    self.output_text.append("\nCache loading completed successfully!\n")
+                    QMessageBox.information(self, "Success", "Loaded cached analysis results!")
+                    return
 
         # Reset cancellation state
         self._cancelled = False
