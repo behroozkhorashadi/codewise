@@ -34,7 +34,7 @@ jobs:
       - name: "Run Tests"
         run: |
           source .venv/bin/activate
-          pytest --cov=code_wise --cov-report=term-missing
+          pytest --ignore=tests/gui --cov=source --cov-report=term-missing
 
   lint:
     runs-on: ubuntu-latest
