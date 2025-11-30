@@ -13,36 +13,11 @@ Tests focus on:
 from unittest.mock import Mock, patch
 
 import pytest
-from PySide6.QtCore import QCoreApplication
-from PySide6.QtWidgets import QApplication
 
 from source.codewise_gui.codewise_ui_utils import AnalysisWorker
 
-# Global QApplication instance for all tests
-_qapp = None
-
-
-def get_qapp():
-    """Get or create a QApplication instance"""
-    global _qapp
-    if _qapp is None:
-        _qapp = QApplication([])
-    return _qapp
-
-
-@pytest.fixture(autouse=True)
-def suppress_message_boxes(monkeypatch):
-    """Fixture to suppress QMessageBox popups during tests"""
-    from unittest.mock import Mock
-
-    from PySide6.QtWidgets import QMessageBox as RealQMessageBox
-
-    monkeypatch.setattr(RealQMessageBox, "information", Mock(return_value=None))
-    monkeypatch.setattr(RealQMessageBox, "warning", Mock(return_value=None))
-    monkeypatch.setattr(RealQMessageBox, "critical", Mock(return_value=None))
-
-    yield
-    QCoreApplication.processEvents()
+# Import the shared fixtures and helper from test_ui_utils
+from .test_ui_utils import get_qapp, suppress_message_boxes  # noqa: F401
 
 
 class TestAnalysisWorkerInitialization:
@@ -525,11 +500,3 @@ class TestAnalysisWorkerCancellation:
             assert "Analysis for method: test_method" in api_response_calls[0]
 
             assert finished_signal.called
-
-
-def pytest_sessionfinish(session, exitstatus):
-    """Clean up QApplication after all tests"""
-    global _qapp
-    if _qapp is not None:
-        _qapp.quit()
-        _qapp = None
