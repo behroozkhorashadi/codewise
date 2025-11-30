@@ -1,13 +1,12 @@
-import threading
 import time
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
-from PySide6.QtCore import QCoreApplication, QTimer
+from PySide6.QtCore import QCoreApplication
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QApplication
 
-from source.codewise_gui.codewise_ui_utils import AnalysisWorker, CodewiseApp, LoadingSpinner
+from source.codewise_gui.codewise_ui_utils import LoadingSpinner
 
 # Global QApplication instance for all tests
 _qapp = None

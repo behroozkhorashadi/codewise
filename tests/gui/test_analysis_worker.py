@@ -12,8 +12,6 @@ Tests focus on:
 
 from unittest.mock import Mock, patch
 
-import pytest
-
 from source.codewise_gui.codewise_ui_utils import AnalysisWorker
 
 # Import the shared fixtures and helper from test_ui_utils

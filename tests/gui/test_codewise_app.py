@@ -12,12 +12,7 @@ Tests focus on:
 
 from unittest.mock import Mock, patch
 
-import pytest
-from PySide6.QtCore import QCoreApplication
-from PySide6.QtGui import QPainter
-from PySide6.QtWidgets import QApplication
-
-from source.codewise_gui.codewise_ui_utils import CodewiseApp, LoadingSpinner
+from source.codewise_gui.codewise_ui_utils import CodewiseApp
 
 # Import the shared fixtures and helper from test_ui_utils
 from .test_ui_utils import get_qapp, suppress_message_boxes  # noqa: F401
