@@ -37,3 +37,11 @@ include_trailing_comma = true
 line-length = 120
 target-version = ["py313"]
 skip-string-normalization = true
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+testpaths = ["tests"]
+# Exit code 134 is a known macOS/PySide6 issue during cleanup - tests pass despite this
+addopts = "-v"
