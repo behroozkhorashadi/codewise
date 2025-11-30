@@ -5,19 +5,16 @@ import time
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Optional
 
-from PySide6.QtCore import Qt, QThread, QThreadPool, QTimer, Signal
-from PySide6.QtGui import QColor, QFont, QPainter
+from PySide6.QtCore import Qt, QThread, QTimer, Signal
+from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import (
-    QButtonGroup,
     QFileDialog,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
-    QProgressBar,
     QPushButton,
     QRadioButton,
-    QScrollArea,
     QSplitter,
     QTextEdit,
     QVBoxLayout,

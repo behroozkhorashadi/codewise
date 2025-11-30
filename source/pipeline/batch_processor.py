@@ -194,7 +194,7 @@ class BatchProcessor:
             samples = samples[:max_samples]
 
         # Initialize models
-        print(f"\nInitializing models...")
+        print("\nInitializing models...")
         models = self.initialize_models()
         print(f"✓ Initialized {len(models)} models: {', '.join(m[1] for m in models)}")
 
@@ -242,13 +242,13 @@ class BatchProcessor:
 
         # Print cache stats
         cache_stats = self.cache_manager.get_cache_stats()
-        print(f"\nCache statistics:")
+        print("\nCache statistics:")
         print(f"  Cached files: {cache_stats['total_files']}")
         print(f"  Cache size: {cache_stats['total_size_mb']:.2f} MB")
 
         # Print API call summary
         api_summary = self.logger.get_api_call_summary()
-        print(f"\nAPI call statistics:")
+        print("\nAPI call statistics:")
         print(f"  Total calls: {api_summary['total_calls']}")
         print(f"  Successful: {api_summary['successful_calls']}")
         print(f"  Cached: {api_summary['cached_calls']}")

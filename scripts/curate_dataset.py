@@ -9,10 +9,7 @@ This script provides utilities for:
 """
 
 import csv
-import json
-import os
 from pathlib import Path
-from typing import List
 
 # Dataset metadata structure
 DATASET_METADATA_TEMPLATE = {

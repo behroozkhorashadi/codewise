@@ -9,9 +9,7 @@ import logging
 import logging.handlers
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
-
-import yaml
+from typing import Optional
 
 
 class PipelineLogger:

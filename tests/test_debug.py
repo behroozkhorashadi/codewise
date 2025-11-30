@@ -14,7 +14,7 @@ def test_method_collection():
     root_dir = "/Users/ahmadkhorashadi/code_projects/codewise"
     test_file = "/Users/ahmadkhorashadi/code_projects/codewise/code_evaluator.py"
 
-    print(f"Testing method collection...")
+    print("Testing method collection...")
     print(f"Root directory: {root_dir}")
     print(f"Test file: {test_file}")
 
