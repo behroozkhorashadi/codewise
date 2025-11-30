@@ -98,7 +98,7 @@ class TestCancellableAPICallSuccessfulCalls:
         api_call = CancellableAPICall()
         mock_get_ratings.return_value = "Response"
 
-        result = api_call.call_api("test prompt")
+        api_call.call_api("test prompt")
 
         # Should use default model "gpt-4"
         mock_get_ratings.assert_called_once_with("test prompt", "gpt-4")

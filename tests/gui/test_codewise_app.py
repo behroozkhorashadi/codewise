@@ -28,7 +28,7 @@ class TestCodewiseAppInitialization:
 
     def test_app_initialization(self):
         """Test that the app initializes correctly"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         assert codewise_app.worker is None
@@ -38,7 +38,7 @@ class TestCodewiseAppInitialization:
 
     def test_styled_label_creation(self):
         """Test that styled labels are created correctly"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
         label = codewise_app._styled_label("Test Label")
 
@@ -47,7 +47,7 @@ class TestCodewiseAppInitialization:
 
     def test_analysis_mode_initialization(self):
         """Test that analysis mode is initialized correctly"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         # Check default mode
@@ -62,7 +62,7 @@ class TestCodewiseAppFileSelection:
     @patch("PySide6.QtWidgets.QFileDialog.getExistingDirectory")
     def test_select_root_directory(self, mock_dialog):
         """Test root directory selection"""
-        app = get_qapp()
+        get_qapp()
         mock_dialog.return_value = "/test/directory"
 
         codewise_app = CodewiseApp()
@@ -73,7 +73,7 @@ class TestCodewiseAppFileSelection:
     @patch("PySide6.QtWidgets.QFileDialog.getOpenFileName")
     def test_select_file(self, mock_dialog):
         """Test file selection"""
-        app = get_qapp()
+        get_qapp()
         mock_dialog.return_value = ("/test/file.py", "")
 
         codewise_app = CodewiseApp()
@@ -87,7 +87,7 @@ class TestCodewiseAppAnalysisMode:
 
     def test_single_file_mode_selection(self):
         """Test single file mode selection"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
         codewise_app.show()  # Ensure widget is shown for visibility checks
 
@@ -118,7 +118,7 @@ class TestCodewiseAppAnalysisMode:
 
     def test_entire_project_mode_selection(self):
         """Test entire project mode selection"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         # Select entire project mode
@@ -137,7 +137,7 @@ class TestCodewiseAppAnalysisMode:
 
     def test_mode_switching(self):
         """Test switching between modes"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
         codewise_app.show()  # Ensure widget is shown for visibility checks
 
@@ -163,7 +163,7 @@ class TestCodewiseAppSubmission:
 
     def test_on_submit_validation_empty_fields(self):
         """Test submit validation with empty fields"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         # Mock QMessageBox to avoid actual dialog
@@ -175,7 +175,7 @@ class TestCodewiseAppSubmission:
 
     def test_on_submit_missing_root_directory(self):
         """Test submit validation when root directory is missing"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         # Test with no root directory
@@ -185,7 +185,7 @@ class TestCodewiseAppSubmission:
 
     def test_on_submit_success_single_file(self):
         """Test successful submit in single file mode"""
-        app = get_qapp()
+        get_qapp()
 
         with patch("source.codewise_gui.codewise_ui_utils.AnalysisWorker") as mock_worker_class:
             mock_worker = Mock()
@@ -205,7 +205,7 @@ class TestCodewiseAppSubmission:
 
     def test_on_submit_single_file_mode_requires_file_path(self):
         """Test that single file mode requires both root and file path"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         # Set single file mode
@@ -219,7 +219,7 @@ class TestCodewiseAppSubmission:
 
     def test_on_submit_entire_project_mode(self):
         """Test submit in entire project mode"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         # Set entire project mode
@@ -242,7 +242,7 @@ class TestCodewiseAppUpdates:
 
     def test_update_progress(self):
         """Test progress update functionality"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         # Mock the output text widget
@@ -257,7 +257,7 @@ class TestCodewiseAppUpdates:
 
     def test_update_api_response(self):
         """Test API response update functionality"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         # Mock the API response text widget and spinner
@@ -273,7 +273,7 @@ class TestCodewiseAppUpdates:
 
     def test_update_api_response_no_spinner_stop(self):
         """Test that update_api_response doesn't stop the spinner"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         # Mock the API response text
@@ -300,7 +300,7 @@ class TestCodewiseAppEventHandling:
 
     def test_on_analysis_finished(self):
         """Test analysis finished handling"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         # Mock components
@@ -321,7 +321,7 @@ class TestCodewiseAppEventHandling:
 
     def test_on_analysis_error(self):
         """Test analysis error handling"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         # Mock components
@@ -342,7 +342,7 @@ class TestCodewiseAppEventHandling:
 
     def test_on_cancel(self):
         """Test cancel functionality"""
-        app = get_qapp()
+        get_qapp()
         codewise_app = CodewiseApp()
 
         # Mock worker and components

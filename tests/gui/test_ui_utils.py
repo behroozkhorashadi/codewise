@@ -86,7 +86,7 @@ class TestLoadingSpinner:
 
     def test_spinner_initialization(self):
         """Test that the spinner initializes correctly"""
-        app = get_qapp()
+        get_qapp()
         spinner = LoadingSpinner()
 
         assert spinner.angle == 0
@@ -97,7 +97,7 @@ class TestLoadingSpinner:
 
     def test_spinner_start_stop(self):
         """Test that the spinner starts and stops correctly"""
-        app = get_qapp()
+        get_qapp()
         spinner = LoadingSpinner()
 
         # Initially not spinning
@@ -114,7 +114,7 @@ class TestLoadingSpinner:
 
     def test_spinner_rotation(self):
         """Test that the spinner rotates correctly"""
-        app = get_qapp()
+        get_qapp()
         spinner = LoadingSpinner()
 
         initial_angle = spinner.angle
@@ -125,7 +125,7 @@ class TestLoadingSpinner:
 
     def test_spinner_paint_event(self):
         """Test that the spinner can be painted without errors"""
-        app = get_qapp()
+        get_qapp()
         spinner = LoadingSpinner()
 
         # Mock the painter to avoid actual rendering
