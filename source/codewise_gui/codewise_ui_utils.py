@@ -718,15 +718,42 @@ class CodewiseApp(QWidget):
                 result_count = len(cached_data.get("results", []))
                 timestamp = cached_data.get("timestamp", "unknown")
 
-                reply = QMessageBox.question(
-                    self,
-                    "Analysis Results Exist",
+                # Check for repository changes
+                change_info = self._output_storage.detect_repo_changes(root_directory, file_path, self.analysis_mode)
+
+                # Build dialog message
+                dialog_title = "Analysis Results Exist"
+                dialog_message = (
                     f"Analysis results already exist for this configuration.\n\n"
                     f"Cached results: {result_count} methods\n"
-                    f"Saved on: {timestamp}\n\n"
+                    f"Saved on: {timestamp}\n"
+                )
+
+                if change_info:
+                    # There are changes detected
+                    changes = change_info.get('changes', {})
+                    added_count = len(changes.get('added', []))
+                    removed_count = len(changes.get('removed', []))
+                    modified_count = len(changes.get('modified', []))
+
+                    dialog_message += (
+                        f"\n⚠️  REPOSITORY HAS CHANGED:\n"
+                        f"- Modified files: {modified_count}\n"
+                        f"- Added files: {added_count}\n"
+                        f"- Removed files: {removed_count}\n\n"
+                    )
+                    dialog_title = "Analysis Results Exist - Code Changes Detected"
+
+                dialog_message += (
                     f"Do you want to:\n"
-                    f"- Click 'Yes' to use cached results\n"
-                    f"- Click 'No' to re-run the analysis",
+                    f"- Click 'Yes' to use cached results (ignoring changes)\n"
+                    f"- Click 'No' to re-run the analysis"
+                )
+
+                reply = QMessageBox.question(
+                    self,
+                    dialog_title,
+                    dialog_message,
                     QMessageBox.Yes | QMessageBox.No,
                 )
 
@@ -734,6 +761,9 @@ class CodewiseApp(QWidget):
                     # Load and display cached results
                     self.output_text.append(f"Loading cached analysis results from: {output_path}\n")
                     self.output_text.append(f"Found {result_count} analyzed methods\n\n")
+
+                    if change_info:
+                        self.output_text.append("⚠️  Note: Repository has changed since this analysis was cached.\n\n")
 
                     # Display cached results
                     for result in cached_data.get("results", []):
