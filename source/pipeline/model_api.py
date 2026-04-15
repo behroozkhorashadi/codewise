@@ -229,7 +229,7 @@ class GPT4Reviewer(CodeReviewModel):
     def __init__(
         self,
         api_key: str,
-        model_name: str = "gpt-4-turbo",
+        model_name: str = "gpt-4o",
         cache_manager: Optional[CacheManager] = None,
     ):
         """

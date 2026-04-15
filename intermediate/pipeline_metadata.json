@@ -10,7 +10,13 @@
     "current_model": null,
     "current_phase": null
   },
-  "samples_processed": [],
+  "samples_processed": [
+    "oss_001",
+    "llm_001",
+    "bad_001",
+    "llm_002",
+    "bad_002"
+  ],
   "api_call_tracking": {
     "claude": {
       "total_calls": 0,

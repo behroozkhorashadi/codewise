@@ -8,6 +8,7 @@ This module handles:
 4. CLI interface for pipeline execution
 """
 
+import csv
 import json
 import sys
 from pathlib import Path
@@ -87,26 +88,72 @@ class BatchProcessor:
         """
         Load all code samples from the dataset directory.
 
-        Returns:
-            List of dicts with 'sample_id' and 'code'.
-        """
-        samples = []
-        py_files = sorted(self.dataset_dir.glob("sample_*.py"))
+        Reads from metadata.csv if present (preferred — preserves sample_id
+        and category metadata). Falls back to globbing all *.py files.
 
+        Returns:
+            List of dicts with 'sample_id', 'code', and optional metadata fields.
+        """
+        metadata_file = self.dataset_dir / "metadata.csv"
+        if metadata_file.exists():
+            return self._load_samples_from_metadata(metadata_file)
+
+        # Fallback: load any .py files in the directory
+        py_files = sorted(f for f in self.dataset_dir.glob("*.py") if not f.name.startswith("test_"))
         if not py_files:
             raise FileNotFoundError(f"No sample files found in {self.dataset_dir}")
 
+        samples = []
         for py_file in py_files:
-            sample_id = py_file.stem
             with open(py_file) as f:
                 code = f.read()
-            samples.append({"sample_id": sample_id, "code": code})
-
+            samples.append({"sample_id": py_file.stem, "code": code})
         return samples
 
-    def initialize_models(self) -> List[tuple]:
+    def _load_samples_from_metadata(self, metadata_file: Path) -> List[Dict[str, str]]:
+        """
+        Load samples using metadata.csv for sample IDs and file paths.
+
+        Args:
+            metadata_file: Path to metadata.csv.
+
+        Returns:
+            List of dicts with sample_id, code, and all metadata fields.
+        """
+        samples = []
+        with open(metadata_file, newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                sample_id = row["sample_id"].strip()
+                file_path = Path(row["file_path"].strip())
+
+                # file_path in CSV is relative to repo root; resolve from there
+                if not file_path.is_absolute():
+                    file_path = Path(__file__).parent.parent.parent / file_path
+
+                if not file_path.exists():
+                    raise FileNotFoundError(f"Sample file not found: {file_path} (sample_id={sample_id})")
+
+                with open(file_path) as code_file:
+                    code = code_file.read()
+
+                sample = {"sample_id": sample_id, "code": code}
+                # Carry along useful metadata for research phases
+                for key in ("source", "category", "quality_expectation", "description", "complexity"):
+                    if key in row:
+                        sample[key] = row[key].strip()
+                samples.append(sample)
+
+        if not samples:
+            raise FileNotFoundError(f"No samples found in {metadata_file}")
+        return samples
+
+    def initialize_models(self, dry_run: bool = False) -> List[tuple]:
         """
         Initialize the configured models.
+
+        Args:
+            dry_run: If True, use placeholder API keys (no actual calls will be made).
 
         Returns:
             List of tuples (model_instance, model_name).
@@ -116,7 +163,7 @@ class BatchProcessor:
 
         # Claude
         if models_config.get("claude", {}).get("enabled"):
-            api_key = self._get_api_key("ANTHROPIC_API_KEY")
+            api_key = "dry-run" if dry_run else self._get_api_key("ANTHROPIC_API_KEY")
             claude = ClaudeReviewer(
                 api_key=api_key,
                 model_name=models_config["claude"]["model_name"],
@@ -126,7 +173,7 @@ class BatchProcessor:
 
         # GPT-4
         if models_config.get("gpt4", {}).get("enabled"):
-            api_key = self._get_api_key("OPENAI_API_KEY")
+            api_key = "dry-run" if dry_run else self._get_api_key("OPENAI_API_KEY")
             gpt4 = GPT4Reviewer(
                 api_key=api_key,
                 model_name=models_config["gpt4"]["model_name"],
@@ -195,7 +242,7 @@ class BatchProcessor:
 
         # Initialize models
         print("\nInitializing models...")
-        models = self.initialize_models()
+        models = self.initialize_models(dry_run=dry_run)
         print(f"✓ Initialized {len(models)} models: {', '.join(m[1] for m in models)}")
 
         if dry_run:
