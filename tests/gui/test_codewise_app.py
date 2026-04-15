@@ -190,6 +190,8 @@ class TestCodewiseAppSubmission:
             codewise_app.analysis_mode = "single_file"
             codewise_app.root_dir_entry.setText("/test/root")
             codewise_app.file_path_entry.setText("/test/file.py")
+            codewise_app._output_storage = Mock()
+            codewise_app._output_storage.output_exists.return_value = False
 
             with patch("PySide6.QtWidgets.QMessageBox.warning", return_value=None):
                 codewise_app.on_submit()
@@ -220,6 +222,8 @@ class TestCodewiseAppSubmission:
         # Set entire project mode
         codewise_app.analysis_mode = "entire_project"
         codewise_app.root_dir_entry.setText("/test/root")
+        codewise_app._output_storage = Mock()
+        codewise_app._output_storage.output_exists.return_value = False
 
         # Test with root directory only
         with patch("source.codewise_gui.codewise_ui_utils.AnalysisWorker") as mock_worker_class:
