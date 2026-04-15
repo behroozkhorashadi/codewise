@@ -5,6 +5,8 @@ venv/
 *.egg-info/
 build/
 .codewise_cache/
+logs/
+outputs/
 # Ignore everything in .vscode
 .vscode/*
 # But NOT the folder itself and NOT settings.json (or launch.json if needed)
