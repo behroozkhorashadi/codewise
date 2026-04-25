@@ -37,7 +37,7 @@ class CancellableAPICall:
         self._cancelled = False
         self._lock = threading.Lock()
 
-    def call_api(self, prompt: str, model: str = "gpt-4") -> str:
+    def call_api(self, prompt: str, model: str = "gpt-4o") -> str:
         """
         Make a cancellable API call.
 

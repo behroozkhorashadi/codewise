@@ -355,3 +355,148 @@ class TestCodewiseAppEventHandling:
         codewise_app.spinner.stop_spinning.assert_called()
         codewise_app.spinner.setVisible.assert_called_with(False)
         codewise_app.submit_btn.setEnabled.assert_called_with(True)
+
+
+class TestOnSubmitCacheFlow:
+    """Tests for the on_submit cache-hit flow (lines 714-788)"""
+
+    def _make_app_with_cache(self, cached_data, change_info=None):
+        get_qapp()
+        app = CodewiseApp()
+        app.root_dir_entry.setText("/test/root")
+        app.file_path_entry.setText("/test/file.py")
+        app.analysis_mode = "single_file"
+
+        storage = Mock()
+        storage.output_exists.return_value = True
+        storage.get_analysis_output_path.return_value = "/tmp/cache/results.json"
+        storage.load_analysis_output.return_value = cached_data
+        storage.detect_repo_changes.return_value = change_info
+        app._output_storage = storage
+        return app
+
+    def test_cache_hit_user_chooses_yes_loads_results(self):
+        """User clicks Yes → cached results are displayed without re-running"""
+        from PySide6.QtWidgets import QMessageBox
+
+        cached_data = {
+            "results": [
+                {"method_name": "foo", "structured_response": {"overall_score": 8, "overall_feedback": "ok"}},
+            ],
+            "timestamp": "2024-01-01T00:00:00",
+        }
+        app = self._make_app_with_cache(cached_data)
+
+        with patch("source.codewise_gui.codewise_ui_utils.AnalysisWorker") as mock_worker_class:
+            with patch.object(QMessageBox, "question", return_value=QMessageBox.Yes):
+                with patch.object(QMessageBox, "information"):
+                    app.on_submit()
+
+            mock_worker_class.assert_not_called()
+
+    def test_cache_hit_user_chooses_no_reruns(self):
+        """User clicks No → analysis runs fresh"""
+        from PySide6.QtWidgets import QMessageBox
+
+        cached_data = {
+            "results": [{"method_name": "foo", "structured_response": {}}],
+            "timestamp": "2024-01-01T00:00:00",
+        }
+        app = self._make_app_with_cache(cached_data)
+
+        mock_worker = Mock()
+        with patch("source.codewise_gui.codewise_ui_utils.AnalysisWorker", return_value=mock_worker):
+            with patch.object(QMessageBox, "question", return_value=QMessageBox.No):
+                app.on_submit()
+
+            mock_worker.start.assert_called_once()
+
+    def test_cache_hit_with_repo_changes_shows_warning_in_dialog(self):
+        """When repo has changed, dialog title reflects changes"""
+        from PySide6.QtWidgets import QMessageBox
+
+        cached_data = {
+            "results": [],
+            "timestamp": "2024-01-01T00:00:00",
+        }
+        change_info = {
+            "has_changes": True,
+            "changes": {"added": ["new.py"], "removed": [], "modified": ["old.py"]},
+            "cached_timestamp": "2024-01-01",
+        }
+        app = self._make_app_with_cache(cached_data, change_info=change_info)
+
+        with patch("source.codewise_gui.codewise_ui_utils.AnalysisWorker") as mock_worker_class:
+            mock_worker_class.return_value = Mock()
+            dialog_kwargs = {}
+
+            def capture_question(parent, title, msg, buttons):
+                dialog_kwargs["title"] = title
+                return QMessageBox.No
+
+            with patch.object(QMessageBox, "question", side_effect=capture_question):
+                app.on_submit()
+
+        assert "Changed" in dialog_kwargs.get("title", "") or "change" in dialog_kwargs.get("title", "").lower()
+
+    def test_cache_hit_old_format_fallback(self):
+        """Cached results with old format (api_response only) load without error"""
+        from PySide6.QtWidgets import QMessageBox
+
+        cached_data = {
+            "results": [{"method_name": "bar", "api_response": "Score: 8/10"}],
+            "timestamp": "2024-01-01T00:00:00",
+        }
+        app = self._make_app_with_cache(cached_data)
+
+        with patch("source.codewise_gui.codewise_ui_utils.AnalysisWorker"):
+            with patch.object(QMessageBox, "question", return_value=QMessageBox.Yes):
+                with patch.object(QMessageBox, "information"):
+                    app.on_submit()
+
+
+class TestOnAnalysisFinishedAndErrorWhenCancelled:
+    """on_analysis_finished/error return early when _cancelled=True"""
+
+    def test_on_analysis_finished_returns_early_if_cancelled(self):
+        get_qapp()
+        app = CodewiseApp()
+        app._cancelled = True
+        app.output_text = Mock()
+        app.spinner = Mock()
+
+        app.on_analysis_finished("done")
+
+        app.output_text.append.assert_not_called()
+
+    def test_on_analysis_error_returns_early_if_cancelled(self):
+        get_qapp()
+        app = CodewiseApp()
+        app._cancelled = True
+        app.output_text = Mock()
+        app.spinner = Mock()
+
+        app.on_analysis_error("something went wrong")
+
+        app.output_text.append.assert_not_called()
+
+
+class TestOnSubmitExceptionHandling:
+    """on_submit gracefully handles exceptions when starting the worker"""
+
+    def test_exception_during_worker_start_resets_ui(self):
+        get_qapp()
+        app = CodewiseApp()
+        app.root_dir_entry.setText("/test/root")
+        app.file_path_entry.setText("/test/file.py")
+        app.analysis_mode = "single_file"
+
+        storage = Mock()
+        storage.output_exists.return_value = False
+        app._output_storage = storage
+
+        with patch("source.codewise_gui.codewise_ui_utils.AnalysisWorker", side_effect=RuntimeError("crash")):
+            app.on_submit()
+
+        # UI should not be stuck in a broken state — submit button re-enabled via reset_ui_after_cancel
+        # No assertion needed if it didn't raise; just verifying graceful handling

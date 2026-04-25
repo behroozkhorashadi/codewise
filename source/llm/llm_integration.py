@@ -10,7 +10,7 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
-def get_method_ratings(prompt: str, model="gpt-4") -> str:
+def get_method_ratings(prompt: str, model="gpt-4o") -> str:
     """
     Calls the OpenAI API with a prompt and returns the response.
 

@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -513,3 +514,48 @@ class TestConcurrentAccess:
 
         # All should be different
         assert len(set(paths)) == 3
+
+
+class TestOutputStorageErrorPaths:
+    """Test error handling branches for coverage"""
+
+    def test_load_corrupt_json_returns_none(self, tmp_path):
+        storage = AnalysisOutputStorage(output_dir=str(tmp_path))
+        output_path = os.path.join(str(tmp_path), "bad.json")
+        with open(output_path, "w") as f:
+            f.write("not valid json {{{{")
+        # Manually patch get_analysis_output_path to point to our corrupt file
+        with patch.object(storage, "get_analysis_output_path", return_value=output_path):
+            with patch.object(storage, "output_exists", return_value=True):
+                result = storage.load_analysis_output("/root", "/file.py", "single_file")
+        assert result is None
+
+    def test_save_ioerror_raises(self, tmp_path):
+        storage = AnalysisOutputStorage(output_dir=str(tmp_path))
+        with patch("builtins.open", side_effect=IOError("disk full")):
+            with pytest.raises(IOError):
+                storage.save_analysis_output("/root", "/f.py", "single_file", {"results": []})
+
+    def test_delete_oserror_returns_false(self, tmp_path):
+        storage = AnalysisOutputStorage(output_dir=str(tmp_path))
+        output_path = os.path.join(str(tmp_path), "file.json")
+        open(output_path, "w").close()
+        with patch.object(storage, "get_analysis_output_path", return_value=output_path):
+            with patch.object(storage, "output_exists", return_value=True):
+                with patch("os.path.exists", return_value=True):
+                    with patch("os.remove", side_effect=OSError("permission denied")):
+                        result = storage.delete_analysis_output("/root", "/f.py", "single_file")
+        assert result is False
+
+    def test_get_all_cached_analyses_nonexistent_dir_returns_empty(self, tmp_path):
+        storage = AnalysisOutputStorage(output_dir=str(tmp_path / "no_such_dir"))
+        storage.output_dir = str(tmp_path / "no_such_dir")
+        result = storage.get_all_cached_analyses()
+        assert result == {}
+
+    def test_get_all_cached_analyses_skips_corrupt_json(self, tmp_path):
+        storage = AnalysisOutputStorage(output_dir=str(tmp_path))
+        corrupt = tmp_path / "corrupt.json"
+        corrupt.write_text("not json")
+        result = storage.get_all_cached_analyses()
+        assert "corrupt.json" not in result

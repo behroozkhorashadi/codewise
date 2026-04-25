@@ -100,8 +100,8 @@ class TestCancellableAPICallSuccessfulCalls:
 
         api_call.call_api("test prompt")
 
-        # Should use default model "gpt-4"
-        mock_get_ratings.assert_called_once_with("test prompt", "gpt-4")
+        # Should use default model "gpt-4o"
+        mock_get_ratings.assert_called_once_with("test prompt", "gpt-4o")
 
 
 class TestCancellableAPICallCancellation:

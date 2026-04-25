@@ -498,3 +498,181 @@ class TestAnalysisWorkerCancellation:
             assert "Analysis for method: test_method" in api_response_calls[0]
 
             assert finished_signal.called
+
+
+# ---------------------------------------------------------------------------
+# Additional coverage tests
+# ---------------------------------------------------------------------------
+
+
+class TestAnalysisWorkerCancelledAtStart:
+    """Test run() returns early when already cancelled"""
+
+    def test_cancelled_before_run_skips_analysis(self):
+        get_qapp()
+        with patch("source.codewise_gui.codewise_ui_utils.collect_method_usages") as mock_collect:
+            worker = AnalysisWorker("/test/root", "/test/file.py")
+            worker._is_cancelled = True
+
+            finished = Mock()
+            worker.finished.connect(finished)
+
+            worker.run()
+
+            mock_collect.assert_not_called()
+            finished.assert_not_called()
+
+
+class TestProcessMethodsCancelledError:
+    """Test CancelledError during _process_methods is handled"""
+
+    @patch("source.codewise_gui.codewise_ui_utils.collect_method_usages")
+    def test_cancelled_error_stops_processing(self, mock_collect):
+        get_qapp()
+        mp = Mock()
+        mp.method_id.method_name = "my_func"
+        mp.file_path = "/f.py"
+        cs = Mock()
+        cs.function_node = Mock()
+        cs.file_path = "/f.py"
+        mock_collect.return_value = {mp: [cs]}
+
+        with patch("source.codewise_gui.codewise_ui_utils.get_method_body", return_value="def my_func(): pass"):
+            from source.codewise_gui.codewise_ui_utils import CancelledError
+
+            worker = AnalysisWorker("/test/root", "/test/file.py")
+            with patch.object(worker._api_call, "call_api", side_effect=CancelledError("cancelled")):
+                progress = Mock()
+                worker.progress.connect(progress)
+                worker.run()
+
+        progress_messages = [c[0][0] for c in progress.call_args_list]
+        assert any("cancelled" in m.lower() for m in progress_messages)
+
+
+class TestProcessMethodsExceptionContinues:
+    """Test that a generic exception in _process_methods emits error and continues"""
+
+    @patch("source.codewise_gui.codewise_ui_utils.collect_method_usages")
+    def test_api_exception_emits_error_message(self, mock_collect):
+        get_qapp()
+        mp1 = Mock()
+        mp1.method_id.method_name = "func1"
+        mp1.file_path = "/f.py"
+        mp2 = Mock()
+        mp2.method_id.method_name = "func2"
+        mp2.file_path = "/f.py"
+        cs = Mock()
+        cs.function_node = Mock()
+        cs.file_path = "/f.py"
+        mock_collect.return_value = {mp1: [cs], mp2: [cs]}
+
+        call_count = [0]
+
+        def fail_first_then_succeed(*args, **kwargs):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                raise RuntimeError("API boom")
+            return '{"overall_score": 7, "criteria_scores": {}}'
+
+        with patch("source.codewise_gui.codewise_ui_utils.get_method_body", return_value="def f(): pass"):
+            worker = AnalysisWorker("/test/root", "/test/file.py")
+            with patch.object(worker._api_call, "call_api", side_effect=fail_first_then_succeed):
+                progress = Mock()
+                worker.progress.connect(progress)
+                worker.run()
+
+        progress_messages = [c[0][0] for c in progress.call_args_list]
+        assert any("Error calling API" in m for m in progress_messages)
+
+
+class TestProcessMethodsSavesResults:
+    """Test that results are saved after _process_methods runs"""
+
+    @patch("source.codewise_gui.codewise_ui_utils.collect_method_usages")
+    @patch("source.codewise_gui.codewise_ui_utils.get_method_ratings")
+    def test_save_path_emitted_in_progress(self, mock_ratings, mock_collect):
+        get_qapp()
+        mp = Mock()
+        mp.method_id.method_name = "func1"
+        mp.file_path = "/f.py"
+        cs = Mock()
+        cs.function_node = Mock()
+        cs.file_path = "/f.py"
+        mock_collect.return_value = {mp: [cs]}
+        mock_ratings.return_value = '{"overall_score": 8, "criteria_scores": {}}'
+
+        with patch("source.codewise_gui.codewise_ui_utils.get_method_body", return_value="def f(): pass"):
+            worker = AnalysisWorker("/test/root", "/test/file.py")
+            mock_storage = Mock()
+            mock_storage.save_analysis_output.return_value = "/tmp/results.json"
+            worker._output_storage = mock_storage
+
+            progress = Mock()
+            worker.progress.connect(progress)
+            worker.run()
+
+        mock_storage.save_analysis_output.assert_called_once()
+
+
+class TestProcessEntireProjectCancelledError:
+    """Test CancelledError in _process_entire_project"""
+
+    @patch("source.codewise_gui.codewise_ui_utils.collect_method_usages_entire_project")
+    def test_cancelled_error_in_entire_project(self, mock_collect):
+        get_qapp()
+        mp = Mock()
+        mp.method_id.method_name = "func1"
+        mp.file_path = "/f.py"
+        cs = Mock()
+        cs.function_node = Mock()
+        cs.file_path = "/f.py"
+        mock_collect.return_value = {"key": (mp, [cs])}
+
+        from source.codewise_gui.codewise_ui_utils import CancelledError
+
+        with patch("source.codewise_gui.codewise_ui_utils.get_method_body", return_value="def f(): pass"):
+            worker = AnalysisWorker("/test/root", analysis_mode="entire_project")
+            with patch.object(worker._api_call, "call_api", side_effect=CancelledError("cancelled")):
+                progress = Mock()
+                worker.progress.connect(progress)
+                worker.run()
+
+        progress_messages = [c[0][0] for c in progress.call_args_list]
+        assert any("cancelled" in m.lower() for m in progress_messages)
+
+
+class TestProcessEntireProjectExceptionContinues:
+    """Test that API exceptions in _process_entire_project emit errors and continue"""
+
+    @patch("source.codewise_gui.codewise_ui_utils.collect_method_usages_entire_project")
+    def test_api_exception_emits_error_and_continues(self, mock_collect):
+        get_qapp()
+        mp1 = Mock()
+        mp1.method_id.method_name = "func1"
+        mp1.file_path = "/f.py"
+        mp2 = Mock()
+        mp2.method_id.method_name = "func2"
+        mp2.file_path = "/g.py"
+        cs = Mock()
+        cs.function_node = Mock()
+        cs.file_path = "/f.py"
+        mock_collect.return_value = {"k1": (mp1, [cs]), "k2": (mp2, [cs])}
+
+        call_count = [0]
+
+        def fail_first(*args, **kwargs):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                raise RuntimeError("boom")
+            return '{"overall_score": 7, "criteria_scores": {}}'
+
+        with patch("source.codewise_gui.codewise_ui_utils.get_method_body", return_value="def f(): pass"):
+            worker = AnalysisWorker("/test/root", analysis_mode="entire_project")
+            with patch.object(worker._api_call, "call_api", side_effect=fail_first):
+                progress = Mock()
+                worker.progress.connect(progress)
+                worker.run()
+
+        progress_messages = [c[0][0] for c in progress.call_args_list]
+        assert any("Error calling API" in m for m in progress_messages)

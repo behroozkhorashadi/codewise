@@ -1,0 +1,999 @@
+\documentclass[12pt]{report}
+\usepackage[left=1.5in, top=1.5in, right=1in, bottom=1in]{geometry}
+\usepackage{mathptmx}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{cite}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+
+\doublespacing
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single
+}
+
+% Chapter heading: centered, bold, number then title
+\titleformat{\chapter}[block]
+  {\normalfont\large\bfseries\centering}
+  {\thechapter.}{0.75ex}{}
+\titlespacing*{\chapter}{0pt}{0pt}{24pt}
+
+% Section headings
+\titleformat{\section}{\normalfont\normalsize\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries\itshape}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\itshape}{\thesubsubsection}{1em}{}
+
+% Page number: top right, no header rule
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyhead[R]{\thepage}%
+  \renewcommand{\headrulewidth}{0pt}%
+}
+
+% TOC formatting
+\renewcommand{\contentsname}{TABLE OF CONTENTS}
+\renewcommand{\listtablename}{LIST OF TABLES}
+\setlength{\cftbeforechapskip}{6pt}
+\renewcommand{\cftchapaftersnum}{.}
+\renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
+\begin{document}
+
+% ============================================================
+% TITLE PAGE
+% ============================================================
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{center}
+\vspace*{1.5in}
+
+{\large\bfseries
+DOES CALL-SITE CONTEXT IMPROVE LLM CODE REVIEW? \\[12pt]
+AN EMPIRICAL STUDY USING ABSTRACT SYNTAX TREE ANALYSIS
+}
+
+\vspace{1in}
+
+A Project
+
+\vspace{0.6in}
+
+Presented to the faculty of the Department of Computer Science \\
+California State University, Sacramento
+
+\vspace{0.6in}
+
+\begin{singlespace}
+Submitted in partial satisfaction of \\
+the requirements for the degree of
+\end{singlespace}
+
+\vspace{0.6in}
+
+MASTER OF SCIENCE
+
+\vspace{0.2in}
+
+in
+
+\vspace{0.2in}
+
+Computer Science
+
+\vspace{0.6in}
+
+by \\[6pt]
+Peeja Khorashadi
+
+\vspace{0.6in}
+
+SPRING \\
+2026
+
+\end{center}
+\end{titlepage}
+
+% ============================================================
+% COPYRIGHT PAGE  (page ii)
+% ============================================================
+\pagenumbering{roman}
+\setcounter{page}{2}
+\thispagestyle{fancy}
+\vspace*{4in}
+\begin{center}
+\copyright~2026 \\[8pt]
+Peeja Khorashadi \\[8pt]
+ALL RIGHTS RESERVED
+\end{center}
+\clearpage
+
+% ============================================================
+% APPROVAL PAGE  (page iii)
+% ============================================================
+\thispagestyle{fancy}
+\begin{center}
+{\large\bfseries
+DOES CALL-SITE CONTEXT IMPROVE LLM CODE REVIEW? \\[12pt]
+AN EMPIRICAL STUDY USING ABSTRACT SYNTAX TREE ANALYSIS
+}
+
+\vspace{0.5in}
+
+A Project
+
+\vspace{0.4in}
+
+by \\[6pt]
+Peeja Khorashadi
+\end{center}
+
+\vspace{1.5in}
+
+\noindent Approved by:
+
+\vspace{0.6in}
+
+\noindent\rule{3.5in}{0.4pt}\,, Committee Chair \\[4pt]
+\noindent Dr.\ Peng Kang
+
+\vspace{0.6in}
+
+\noindent\rule{3.5in}{0.4pt}\,, Second Reader \\[4pt]
+\noindent Dr.\ Haiquan Chen
+
+\vspace{0.6in}
+
+\noindent Date
+\clearpage
+
+% ============================================================
+% FORMAT APPROVAL PAGE  (page iv)
+% ============================================================
+\thispagestyle{fancy}
+\vspace*{1in}
+
+\noindent Student: \underline{\hspace{2.5in}} Peeja Khorashadi
+
+\vspace{0.6in}
+
+\noindent I certify that this student has met the requirements for format contained in the University format manual, and this project is suitable for electronic submission to the library and credit is to be awarded for the project.
+
+\vspace{0.9in}
+
+\noindent\rule{3in}{0.4pt}\,, Graduate Coordinator \hfill \rule{1.5in}{0.4pt} \\[4pt]
+\noindent Dr.\ Haiquan Chen \hfill Date
+
+\vspace{0.4in}
+
+\noindent Department of Computer Science
+\clearpage
+
+% ============================================================
+% ABSTRACT PAGE  (page v)
+% ============================================================
+\thispagestyle{fancy}
+\begin{center}
+Abstract
+
+\vspace{6pt}
+
+of
+
+\vspace{12pt}
+
+{\large\bfseries
+DOES CALL-SITE CONTEXT IMPROVE LLM CODE REVIEW? \\[10pt]
+AN EMPIRICAL STUDY USING ABSTRACT SYNTAX TREE ANALYSIS
+}
+
+\vspace{12pt}
+
+by
+
+\vspace{6pt}
+
+Peeja Khorashadi
+\end{center}
+
+\vspace{0.3in}
+
+\noindent\textit{Statement of Problem}
+
+Large language models are increasingly applied to automated code review, yet nearly all existing approaches evaluate functions in isolation --- without considering how those functions are actually used across the codebase. This isolation may cause LLMs to miss important quality signals present in real-world usage patterns, reducing the accuracy and consistency of LLM-generated code evaluations. The problem this project addresses is: does providing call-site context, extracted automatically via abstract syntax tree (AST) analysis, change LLM code review behavior in measurable and systematic ways?
+
+\vspace{0.25in}
+
+\noindent\textit{Sources of Data}
+
+We evaluated 204 Python methods drawn from four widely-used open-source libraries --- requests, flask, click, and httpx --- using two state-of-the-art large language models (GPT-4o and Claude Sonnet) under two experimental conditions: (A) function body only, and (B) function body plus call-site usage examples extracted via AST analysis. A total of 816 API calls were made, with each method scored on 16 code quality dimensions.
+
+\vspace{0.25in}
+
+\noindent\textit{Conclusions Reached}
+
+Call-site context substantially changes LLM code review scores in model-specific directions. GPT-4o scores functions higher with context (overall $\Delta$ = +0.309), particularly on documentation (+0.80) and error handling (+0.58). Claude scores functions lower overall ($\Delta$ = $-$0.084), particularly on efficiency ($-$0.33) and code consistency ($-$0.32). Inter-model agreement decreases with context (Pearson $r$: 0.563 $\to$ 0.409), while scoring variance decreases for both models (GPT-4o: 29\%, Claude: 8\%). These findings suggest that structural codebase context amplifies model-specific interpretive biases rather than resolving them.
+
+\vspace{0.7in}
+
+\noindent\rule{2.75in}{0.4pt}\,, Committee Chair \\[4pt]
+\noindent Dr.\ Peng Kang
+
+\vspace{0.5in}
+
+\noindent Date
+\clearpage
+
+% ============================================================
+% ACKNOWLEDGEMENTS  (page vi)
+% ============================================================
+\addcontentsline{toc}{chapter}{ACKNOWLEDGEMENTS}
+\thispagestyle{fancy}
+\begin{center}
+\textbf{ACKNOWLEDGEMENTS}
+\end{center}
+
+\vspace{0.2in}
+
+I would like to thank the faculty of the Department of Computer Science at California State University, Sacramento for their guidance and support throughout this project. I am grateful to my committee chair for providing direction and feedback that shaped the research methodology and scope of this work. Special thanks are owed to the developers and open-source communities behind the four libraries used as our experimental dataset --- requests, flask, click, and httpx --- whose publicly available, production-quality codebases made this empirical study possible. Finally, I thank my fellow graduate students for thoughtful discussions that helped sharpen the ideas in this paper.
+
+\clearpage
+
+% ============================================================
+% TABLE OF CONTENTS
+% ============================================================
+\thispagestyle{fancy}
+\begin{singlespace}
+\tableofcontents
+\end{singlespace}
+\clearpage
+
+% ============================================================
+% LIST OF TABLES
+% ============================================================
+\addcontentsline{toc}{chapter}{LIST OF TABLES}
+\thispagestyle{fancy}
+\begin{singlespace}
+\listoftables
+\end{singlespace}
+\clearpage
+
+% ============================================================
+% BEGIN BODY
+% ============================================================
+\pagenumbering{arabic}
+% Inject "Chapter" column header into TOC just before numbered chapter entries
+\addtocontents{toc}{\noindent\textbf{Chapter}\par\vspace{2pt}}
+
+% ============================================================
+% CHAPTER 1: INTRODUCTION
+% ============================================================
+\chapter{INTRODUCTION}
+
+\section{Background and Motivation}
+
+Automated code review is a cornerstone of software quality assurance. In modern software development, code review is performed before every change is merged into a shared codebase --- a process designed to catch bugs, enforce coding standards, share knowledge across teams, and maintain long-term maintainability. Studies of industrial software development have found that code review consumes between 10\% and 15\% of total development time at major technology companies, and that reviewer availability is frequently a bottleneck in development velocity \cite{sadowski2018modern, bacchelli2013expectations}. At the scale of large organizations with thousands of engineers, even small improvements in the efficiency or quality of code review can have substantial aggregate impact.
+
+Traditionally performed entirely by human engineers, code review is time-consuming, expensive, and subject to reviewer fatigue and bias. Bacchelli and Bird \cite{bacchelli2013expectations} conducted a landmark empirical study of modern code review at Microsoft, finding that while reviewers report defect detection as their primary goal, a large fraction of review activity in practice addresses code understanding, style, and knowledge transfer. Reviewers under time pressure tend to focus on surface-level issues such as style and naming at the expense of deeper concerns such as correctness and maintainability. These limitations have motivated a long-running effort to automate aspects of code review using static analysis, rule-based tools, and, more recently, machine learning.
+
+The emergence of large language models (LLMs) capable of understanding and generating code has opened new possibilities for automating this process. Tools such as CodeReviewer \cite{li2022codereviewer} and GitHub Copilot demonstrate that LLMs can generate useful, actionable feedback on code quality with increasing reliability. Critically, however, existing research has identified significant limitations in how reliably LLMs perform this task. Smoli\'{c} et al. \cite{Smolic2024MIPRO} found that LLMs without structured evaluation frameworks perform comparably to random assignment in automated score generation --- a finding that motivates the need for more principled approaches to LLM-based code evaluation.
+
+Despite these advances, a fundamental limitation persists across nearly all existing approaches: functions are evaluated \textit{in isolation}. When an LLM reviews a function, it receives only the function body --- sometimes accompanied by its docstring or type annotations --- but receives no information about how that function is actually used across the codebase. It does not see what arguments callers pass in practice, what error conditions callers handle or ignore, or what the broader architectural context of the function is. This isolation is not a deliberate design choice but rather a practical default: it is far simpler to extract a function body than to reconstruct its usage patterns across a large codebase.
+
+This limitation is significant. A function that appears well-designed in isolation may be poorly suited to its actual usage patterns. Its error handling may not cover the edge cases that callers expose it to. Its interface may be unnecessarily rigid given how it is actually invoked. Its documentation may omit precisely the information that callers need most. A human reviewer reading a pull request does not evaluate functions in isolation --- they read the surrounding code, they understand the calling context, and their feedback is informed by that context.
+
+We propose to close this gap by leveraging \textbf{abstract syntax tree (AST) analysis} to automatically extract call-site context --- the bodies of functions that call a given method --- and provide this context to LLMs during code review. Our key hypothesis is that this structural context will change LLM evaluations in measurable and systematic ways.
+
+\section{Research Questions}
+
+This project addresses three research questions:
+
+\begin{itemize}
+    \item \textbf{RQ1}: Does call-site context change the scores LLMs assign across code quality dimensions?
+    \item \textbf{RQ2}: Does call-site context increase agreement between different LLMs?
+    \item \textbf{RQ3}: Does call-site context reduce variance in LLM scoring?
+\end{itemize}
+
+Our results reveal that call-site context has substantial but model-specific effects. GPT-4o scores functions higher across most dimensions when given context, with the largest gains on documentation (+0.80) and error handling (+0.58). Claude, by contrast, scores functions slightly lower overall, becoming more critical on efficiency and code consistency. Surprisingly, inter-model agreement \textit{decreases} with context (Pearson $r$: 0.563 $\to$ 0.409), suggesting that structural context amplifies rather than resolves model-specific evaluation biases. Both models, however, produce more internally consistent scores with context --- scoring variance drops for both GPT-4o and Claude.
+
+\section{Contributions}
+
+This project makes the following specific contributions:
+
+\begin{enumerate}
+    \item \textbf{A controlled empirical study of call-site context effects.} We conduct the first controlled experiment comparing LLM code review quality under isolated versus call-site-enriched conditions across 204 real-world Python methods drawn from four production-quality open-source libraries. Our study encompasses 816 total API calls across two models and two conditions, producing results consistent enough to identify systematic patterns across repositories.
+
+    \item \textbf{An AST-based context extraction pipeline.} We implement a fully automated pipeline using Python's built-in \texttt{ast} module to extract call-site context from arbitrary Python repositories. The pipeline handles cross-file import resolution, class method identification via parent pointer traversal, and random sampling of up to ten call sites per method. The pipeline is publicly reproducible and requires only the repository source code as input.
+
+    \item \textbf{Quantitative metrics for evaluating LLM code review quality.} We define and compute three metrics --- score delta, inter-model agreement, and scoring variance --- that operationalize different facets of review quality in a model-agnostic way.
+
+    \item \textbf{The confirmatory versus evaluative hypothesis.} We propose and provide evidence for a theoretical framework explaining why GPT-4o and Claude respond to call-site context in opposite directions. This hypothesis has implications for model selection decisions in automated review system design.
+
+    \item \textbf{Empirical evidence against the context-convergence assumption.} Our RQ2 results challenge the widely-held assumption that providing more shared information to multiple LLMs will increase their agreement. We show that structural context can \textit{decrease} inter-model agreement by activating different model-specific interpretive frameworks.
+\end{enumerate}
+
+The remainder of this paper is organized as follows. Chapter 2 reviews related work on code review processes, LLM-based code evaluation, and AST analysis. Chapter 3 describes the methodology. Chapter 4 presents the results for all three research questions. Chapter 5 discusses implications, limitations, and future work.
+
+% ============================================================
+% CHAPTER 2: BACKGROUND OF THE STUDY
+% ============================================================
+\chapter{BACKGROUND OF THE STUDY}
+
+\section{Modern Code Review: Process and Challenges}
+
+Code review has been the subject of substantial empirical study in software engineering research. Bacchelli and Bird \cite{bacchelli2013expectations} surveyed developers and managers at Microsoft to understand what practitioners expect from code review and what actually happens in practice. Their study found a significant gap between expectations and outcomes: while participants ranked defect finding as the most important goal of code review, analysis of actual review comments showed that most comments addressed code understanding, alternate solutions, and style rather than defects. This finding establishes that code review serves multiple purposes beyond defect detection --- a diversity of goals that any automated code review system must account for.
+
+Sadowski et al. \cite{sadowski2018modern} studied code review practices at Google, where the company conducts tens of thousands of code reviews daily. Their analysis identified scalability as the central challenge of industrial code review: as codebases and engineering teams grow, the volume of code requiring review grows faster than reviewer availability. They found that lightweight, fast review tools are preferred over thorough but slow ones, establishing a practical tradeoff that automated code review systems must navigate. Our work addresses this tradeoff directly: AST-based call-site extraction is a lightweight, fully automated operation that can be completed in seconds for any Python repository, making it a practical enrichment for industrial-scale review pipelines.
+
+\section{LLM-Based Code Evaluation: Capabilities and Limitations}
+
+The application of LLMs to automated code evaluation has emerged rapidly as a research area. Li et al. \cite{li2022codereviewer} introduced CodeReviewer, one of the earliest large-scale pre-trained models specifically designed for code review activities. CodeReviewer is trained on a corpus of real code review data from open-source projects and evaluated on three tasks: code change quality estimation, review comment generation, and code refinement. Its approach is representative of the field: the model receives a code diff and generates feedback, but does so without any information about how the changed function is used across the broader codebase. Each function is reviewed in isolation.
+
+Two critical empirical studies by Smoli\'{c} et al. directly motivate our work. In the first \cite{Smolic2024MIPRO}, the authors evaluated LLMs on student exam code and found that without structured evaluation frameworks, LLMs perform comparably to random assignment in automated score generation. This is a striking finding: despite LLMs' general code understanding capabilities, unstructured LLM grading is effectively unreliable. The study highlights the importance of structured rubrics --- which our 16-dimension evaluation framework provides --- but does not address the role of codebase context in improving evaluation quality.
+
+In the second study \cite{Smolic2024FewShot}, the same authors investigated whether few-shot prompting --- providing the LLM with example code-grade pairs before asking it to evaluate new code --- improves grading consistency and accuracy. They found that few-shot prompting does improve LLM code grading performance, suggesting that context provided in the prompt can meaningfully change evaluation behavior. \textbf{This is the most direct predecessor to our work}: where Smoli\'{c} et al. use few-shot examples of graded code as context, we use structurally extracted call-site examples from the actual codebase. Our approach is complementary but fundamentally different: few-shot prompting provides evaluative context (how other code was graded), while call-site context provides structural context (how the specific function under review is actually used).
+
+\section{AST Analysis as a Source of Structural Context}
+
+Abstract syntax tree analysis has a long history in program analysis and code intelligence. The AST provides a structured, language-aware representation of source code that captures syntactic relationships invisible to raw text models. Alon et al. \cite{alon2019code2vec} introduced code2vec, which represents code as fixed-length vectors by decomposing ASTs into path sequences between leaf nodes. Each path captures a syntactic relationship between two nodes, and a learned attention mechanism aggregates these paths into a single code embedding. code2vec demonstrated strong performance on method name prediction --- evidence that AST-derived structural features encode semantically meaningful information about what code does and how it is organized.
+
+This work establishes an important foundation for our approach: if AST paths between nodes within a single function capture meaningful semantic information, then AST-derived relationships between functions --- specifically, the caller-callee relationship --- should capture equally meaningful information about how a function is used in context. Our work extends the spirit of code2vec from code representation to code review: rather than using AST structure to build a vector representation, we use it to retrieve real usage examples that we provide directly to an LLM as natural language context.
+
+\section{Context Effects in LLM Code Intelligence}
+
+Chen et al. \cite{chen2021codex} introduced Codex --- the model underlying GitHub Copilot --- and conducted extensive evaluations of its code generation capabilities. A key finding was that Codex's performance degrades significantly when it must reason about functions or variables defined outside its context window. This is precisely the situation that occurs in isolated function review: the LLM must reason about a function's quality without seeing the code that depends on it. Chen et al.'s work establishes that context availability is a first-order determinant of LLM performance on code tasks --- a principle our study applies to the code review setting.
+
+\section{How This Project Differs from Prior Work}
+
+Table~\ref{tab:related} summarizes how this project compares to the five most closely related prior studies.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lllll}
+\toprule
+\textbf{Work} & \textbf{Context Type} & \textbf{Context Source} & \textbf{Evaluation Target} & \textbf{Metric} \\
+\midrule
+Bacchelli \& Bird \cite{bacchelli2013expectations} & None & --- & Industrial code & Reviewer goals \\
+Sadowski et al. \cite{sadowski2018modern}  & Diff context & Pull request & Industrial code & Process outcomes \\
+Smoli\'{c} et al. \cite{Smolic2024MIPRO}    & None    & ---   & Student code  & Grade accuracy \\
+Smoli\'{c} et al. \cite{Smolic2024FewShot}  & Few-shot examples & Graded samples & Student code  & Grade consistency \\
+Li et al. \cite{li2022codereviewer}  & Code diff  & Pull request  & OSS diffs  & Review quality \\
+\textbf{This project}  & \textbf{Call-site context} & \textbf{AST traversal} & \textbf{OSS functions} & \textbf{Score delta, agreement, variance} \\
+\bottomrule
+\end{tabular}
+\caption{Comparison of this project to the most closely related prior studies.}
+\label{tab:related}
+\end{table}
+
+The key novelty of this project is the use of \textbf{AST-extracted call-site context from the live codebase} as a prompt enrichment strategy for LLM code review. Prior work either provides no context, provides few-shot grading examples, or provides diff context from pull requests --- none of which captures how a specific function is actually called across the codebase. This project is the first to systematically study whether this form of structural context changes LLM code evaluation in measurable ways.
+
+% ============================================================
+% CHAPTER 3: METHODOLOGY
+% ============================================================
+\chapter{METHODOLOGY}
+
+\section{Overview}
+
+Our experiment is designed to isolate the effect of call-site context on LLM code review quality. The core experimental unit is a single Python method evaluated under two prompt conditions by two LLMs. By holding everything constant except the presence or absence of call-site context, we can attribute differences in scores directly to the context rather than to other confounding factors such as model version, prompt wording, or code characteristics.
+
+The experiment proceeds in four stages: (1) dataset construction, in which we select open-source repositories and extract Python methods meeting our inclusion criteria; (2) AST-based call-site extraction, in which we traverse each repository's AST to find all call sites for each method; (3) LLM evaluation, in which each method is sent to both models under both conditions; and (4) metric computation, in which we compute score delta, inter-model agreement, and scoring variance from the collected results.
+
+\section{Dataset Construction}
+
+\subsection{Repository Selection}
+
+We selected four widely-used open-source Python libraries as our dataset sources:
+
+\begin{itemize}
+    \item \textbf{requests} (v2.x): A popular HTTP client library known for its clean, Pythonic API design. The requests library is widely regarded as a model of good Python software engineering practice, making it a useful benchmark in our dataset.
+    \item \textbf{flask} (v3.x): A lightweight web application framework. Flask's codebase includes a diverse range of function types, from low-level request handling to high-level application configuration.
+    \item \textbf{click} (v8.x): A library for building command-line interfaces. Click makes heavy use of Python decorators and functional programming patterns, providing a stylistically distinct codebase from the other three libraries.
+    \item \textbf{httpx} (v0.x): A modern HTTP client with support for async I/O. httpx's codebase is architecturally similar to requests but with a more complex class hierarchy and explicit async/sync dual-mode design.
+\end{itemize}
+
+These four libraries were chosen to provide diversity across application domain (HTTP clients, web framework, CLI), architectural style (functional versus object-oriented), and codebase size (small to medium). All four are mature, well-maintained libraries with active communities and high overall code quality.
+
+\subsection{Method Inclusion Criteria}
+
+We applied the following inclusion criteria to determine which methods to evaluate:
+
+\begin{enumerate}
+    \item \textbf{Minimum call sites}: The method must have at least two detectable call sites in the repository. This threshold ensures that Condition B provides meaningful context --- a single call site may not be representative of typical usage patterns.
+    \item \textbf{Non-test}: Methods defined in files whose names begin with \texttt{test\_} are excluded. Test files often contain methods with unusual calling patterns not representative of production code.
+    \item \textbf{Non-trivial}: Methods consisting of a single line rarely accumulate two call sites and are effectively filtered by criterion 1.
+\end{enumerate}
+
+Table~\ref{tab:dataset} summarizes the resulting dataset.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Repository} & \textbf{Files Scanned} & \textbf{Methods Found} & \textbf{Methods Evaluated} \\
+\midrule
+requests & 18 & 43  & 25 \\
+flask    & 24 & 61  & 33 \\
+click    & 17 & 88  & 70 \\
+httpx    & 29 & 112 & 76 \\
+\midrule
+\textbf{Total} & \textbf{88} & \textbf{304} & \textbf{204} \\
+\bottomrule
+\end{tabular}
+\caption{Dataset composition. ``Methods Found'' includes all methods detected by the AST parser; ``Methods Evaluated'' includes only those with at least two call sites.}
+\label{tab:dataset}
+\end{table}
+
+Of the 304 methods found across all repositories, 204 (67\%) met the two-call-site threshold. The remaining 100 methods were either only called once within the package boundary or were called exclusively through module-level attribute access which the AST resolver cannot reliably match to a specific definition.
+
+\section{AST-Based Call-Site Extraction}
+
+\subsection{Implementation Overview}
+
+We implement call-site extraction using Python's built-in \texttt{ast} module, which provides a full parse tree for any syntactically valid Python file. Our implementation centers on a \texttt{MethodUsageCollector} class that performs a two-phase traversal: first collecting method definitions from a target file, then searching all other files in the repository for call sites.
+
+\subsection{Phase 1: Method Definition Collection}
+
+In the first phase, \texttt{MethodUsageCollector} parses the target file and walks its AST to collect all \texttt{FunctionDef} nodes. For each function definition, we record the function name, the module name (derived from the file path relative to the repository root), the AST node, and the file path. Class methods are handled specially: when a \texttt{FunctionDef} node is found inside a \texttt{ClassDef} node (detected by walking up the parent pointer chain), it is recorded under its method name alone.
+
+Parent pointers are added to all AST nodes in a preprocessing step, since Python's \texttt{ast} module does not provide them by default. This is accomplished by a recursive traversal that sets a \texttt{.parent} attribute on each node to reference its parent node.
+
+\subsection{Phase 2: Call-Site Discovery}
+
+In the second phase, \texttt{MethodUsageCollector} walks all Python files in the repository directory, excluding virtual environments, \texttt{\_\_pycache\_\_}, \texttt{.git}, and test files. For each file, it parses the file, sets parent pointers on its AST, builds an import map from all \texttt{Import} and \texttt{ImportFrom} nodes, and then visits all \texttt{Call} nodes and attempts to resolve each call to a known method definition using the import map.
+
+Call resolution handles two cases. Direct calls (\texttt{function\_name(...)}) look up the function name in the import map to determine its module. Attribute calls (\texttt{object.method\_name(...)}) look up the base object in the import map, or match directly against known class methods if the object is \texttt{self}.
+
+When a call is resolved to a known method definition, the enclosing function --- found by walking up the parent pointer chain from the \texttt{Call} node until a \texttt{FunctionDef} is reached --- is recorded as a call site. Up to ten call sites are collected per method (sampled randomly if more are available).
+
+\subsection{Call-Site Text Extraction}
+
+For each call site, we extract the full source text of the enclosing function using \texttt{ast.get\_source\_segment()}, which retrieves the exact source text corresponding to an AST node. Multiple call-site texts are concatenated with double newlines to form the usage context provided to the LLM in Condition B.
+
+Listing~\ref{lst:callsite} shows an example of a function and one of its call sites, illustrating the kind of context provided to the LLM.
+
+\begin{lstlisting}[caption={Example: \texttt{unquote\_header\_value} from requests and one call site from \texttt{parse\_dict\_header}.}, label={lst:callsite}]
+# Function being evaluated (provided in both conditions)
+def unquote_header_value(value, is_filename=False):
+    if value and value[0] == value[-1] == '"':
+        value = value[1:-1]
+        if not is_filename or value[:2] != "\\\\":
+            return value.replace("\\\\", "\\").replace('\\"', '"')
+    return value
+
+# Call site example (provided only in Condition B)
+def parse_dict_header(value):
+    result = {}
+    for item in _parse_list_header(value):
+        if "=" not in item:
+            result[item] = None
+            continue
+        name, value = item.split("=", 1)
+        if value[:1] == value[-1:] == '"':
+            value = unquote_header_value(value[1:-1])
+        result[name] = value
+    return result
+\end{lstlisting}
+
+In this example, the call site reveals that \texttt{unquote\_header\_value} is always called with its first argument already stripped of outer quotes (the \texttt{value[1:-1]} slice), and that the \texttt{is\_filename} parameter is never used at this call site. An LLM reviewer given this context may draw different conclusions about the function's interface design than one given only the function body.
+
+\section{Experimental Conditions}
+
+Each method is evaluated under two conditions:
+
+\begin{itemize}
+    \item \textbf{Condition A (No Context)}: The prompt contains only the function body and the evaluation rubric. This represents the standard approach used by existing automated code review systems.
+    \item \textbf{Condition B (Call-Site Context)}: The prompt contains the function body, the evaluation rubric, and the bodies of all functions that call it (up to ten), formatted as a ``Usage Examples'' section. This represents our proposed context-enriched approach.
+\end{itemize}
+
+Both conditions use identical prompt wording except for the presence or absence of the usage examples section. This ensures that any observed differences in scores can be attributed to the call-site context rather than to differences in prompt structure.
+
+\section{Models}
+
+We evaluate two state-of-the-art LLMs representing different model families and providers:
+
+\begin{itemize}
+    \item \textbf{GPT-4o} (OpenAI, 2024): OpenAI's multimodal flagship model, widely used in code intelligence research and industry deployments. Accessed via the OpenAI API with temperature 0.2 and a maximum of 1,500 output tokens.
+    \item \textbf{Claude Sonnet} (Anthropic, 2024): Anthropic's mid-tier model in the Claude family, designed for a balance of capability and efficiency. Accessed via the Anthropic API with equivalent generation parameters.
+\end{itemize}
+
+Using two models from different providers allows us to assess inter-model agreement --- a secondary metric reflecting whether the two models respond similarly to call-site context --- and guards against results that might be specific to one model family.
+
+Temperature was set to 0.2 rather than 0 to allow some natural variation in outputs while keeping scores relatively stable. We do not repeat evaluations multiple times per method due to the cost and time constraints of the study (816 total API calls).
+
+\section{Evaluation Rubric}
+
+Each method is scored on 16 code quality dimensions on a scale of 1 to 10, where 1 represents a poorly implemented dimension and 10 represents an excellent one:
+
+\begin{enumerate}
+    \item \textbf{Separation of Concerns}: Does the method adhere to the single-responsibility principle?
+    \item \textbf{Documentation}: Is the method well-documented with a clear, descriptive docstring?
+    \item \textbf{Logic Clarity}: Is the logic free of obvious bugs and does it follow Pythonic idioms?
+    \item \textbf{Understandability}: Is the code straightforward with descriptive, PEP 8-compliant names?
+    \item \textbf{Efficiency}: Is the method optimized for time and memory complexity?
+    \item \textbf{Error Handling}: Does the method handle edge cases gracefully?
+    \item \textbf{Testability}: Is the method designed to make unit testing straightforward?
+    \item \textbf{Reusability}: Is the method modular enough to be reused in different contexts?
+    \item \textbf{Code Consistency}: Does the method follow consistent Python conventions (PEP 8)?
+    \item \textbf{Dependency Management}: Does the method avoid unnecessary or tightly-coupled dependencies?
+    \item \textbf{Security Awareness}: Does the method avoid common security pitfalls?
+    \item \textbf{Side Effects}: Does the method minimize unintended changes to external state?
+    \item \textbf{Scalability}: Does the method handle data efficiently under load?
+    \item \textbf{Resource Management}: Does the method correctly manage resources such as file handles?
+    \item \textbf{Encapsulation}: Does the method use appropriate access modifiers and hide internal details?
+    \item \textbf{Readability}: For complex logic, does the method break it into well-named sub-functions?
+\end{enumerate}
+
+The rubric covers a broad range of code quality concerns, from low-level style to behavioral properties to architectural concerns. This breadth allows us to identify which categories of quality assessment are most affected by call-site context. The LLM is instructed to return scores as a structured JSON object, enabling programmatic extraction and analysis. The full prompt template is provided in Appendix A.
+
+\section{Metrics}
+
+\subsection{Score Delta (RQ1)}
+
+For each method $m$, model $\ell$, and dimension $d$, we compute:
+\[
+\Delta_{m,\ell,d} = s^B_{m,\ell,d} - s^A_{m,\ell,d}
+\]
+where $s^B_{m,\ell,d}$ is the score assigned under Condition B and $s^A_{m,\ell,d}$ is the score under Condition A. We then compute the mean delta across all methods:
+\[
+\bar{\Delta}_{\ell,d} = \frac{1}{|M|} \sum_{m \in M} \Delta_{m,\ell,d}
+\]
+A positive mean delta indicates that call-site context caused the model to assign higher scores on that dimension; a negative delta indicates context caused lower scores.
+
+\subsection{Inter-Model Agreement (RQ2)}
+
+For each condition $c \in \{A, B\}$ and dimension $d$, we compute the Pearson correlation between GPT-4o scores and Claude scores across all methods:
+\[
+r_{c,d} = \text{Pearson}\left(\{s^c_{m,\text{gpt4o},d}\}_{m \in M},\ \{s^c_{m,\text{claude},d}\}_{m \in M}\right)
+\]
+A higher Pearson $r$ indicates greater agreement between the two models. We compare $r_{A,d}$ and $r_{B,d}$ to assess whether call-site context increases or decreases inter-model agreement.
+
+\subsection{Score Variance (RQ3)}
+
+For each method $m$, model $\ell$, and condition $c$, we compute the variance of scores across the 16 dimensions:
+\[
+\sigma^2_{m,\ell,c} = \text{Var}\left(\{s^c_{m,\ell,d}\}_{d \in D}\right)
+\]
+We then compute the mean variance across all methods:
+\[
+\bar{\sigma}^2_{\ell,c} = \frac{1}{|M|} \sum_{m \in M} \sigma^2_{m,\ell,c}
+\]
+Lower variance indicates that a model assigns more consistent scores across quality dimensions. We compare $\bar{\sigma}^2_{\ell,A}$ and $\bar{\sigma}^2_{\ell,B}$ to assess whether context makes scoring more or less consistent.
+
+% ============================================================
+% CHAPTER 4: RESULTS
+% ============================================================
+\chapter{RESULTS}
+
+\section{Overview}
+
+We present results across three research questions, drawing on 204 methods evaluated under two conditions by two models (816 total API calls). All reported deltas are means across the full dataset unless otherwise specified. We present results at the aggregate level, then examine per-repository patterns to assess consistency.
+
+\section{RQ1: Score Delta --- Does Context Change Scores?}
+
+\subsection{Aggregate Results}
+
+Table~\ref{tab:delta_full} shows the mean score delta (Condition B $-$ Condition A) for all 16 dimensions plus overall score, for both models.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Dimension} & \textbf{GPT-4o $\Delta$} & \textbf{Claude $\Delta$} \\
+\midrule
+Overall                & +0.309 & $-$0.084 \\
+\midrule
+Separation of Concerns & +0.088 & $-$0.109 \\
+Documentation          & +0.799 & +0.000 \\
+Logic Clarity          & +0.167 & $-$0.119 \\
+Understandability      & +0.132 & $-$0.005 \\
+Efficiency             & $-$0.059 & $-$0.332 \\
+Error Handling         & +0.583 & +0.074 \\
+Testability            & +0.387 & +0.030 \\
+Reusability            & +0.235 & +0.129 \\
+Code Consistency       & +0.137 & $-$0.322 \\
+Dependency Management  & +0.132 & $-$0.069 \\
+Security Awareness     & +0.216 & $-$0.134 \\
+Side Effects           & +0.201 & $-$0.064 \\
+Scalability            & +0.108 & $-$0.282 \\
+Resource Management    & $-$0.010 & $-$0.163 \\
+Encapsulation          & +0.034 & $-$0.030 \\
+Readability            & +0.132 & $-$0.030 \\
+\bottomrule
+\end{tabular}
+\caption{Mean score delta (Condition B $-$ Condition A) per model across all 16 dimensions. Positive values indicate context raised the score; negative values indicate context lowered it.}
+\label{tab:delta_full}
+\end{table}
+
+\subsection{GPT-4o: Context as Confirmatory Signal}
+
+GPT-4o scores functions higher with context on 14 of 16 dimensions, with an overall mean delta of +0.309. The three largest positive deltas are:
+
+\begin{itemize}
+    \item \textbf{Documentation} (+0.799): The largest effect by a substantial margin. When GPT-4o can see how a function is called, it appears to reward functions whose documentation addresses the concerns of their callers. Since documentation quality is difficult to assess in isolation --- it is unclear what a reader would need to know without seeing real usage --- call-site context provides the frame of reference needed to evaluate it meaningfully.
+    \item \textbf{Error Handling} (+0.583): Call-site context reveals what inputs a function actually receives and what error conditions its callers handle or ignore. A function that appears to have adequate error handling in isolation may be revealed by its call sites to be missing handling for conditions that callers regularly expose it to.
+    \item \textbf{Testability} (+0.387): Seeing how a function is called reveals its implicit dependencies and side effects, which directly affect how easy it is to test. Functions that appear testable in isolation may be revealed by their call sites to depend on complex caller-provided state.
+\end{itemize}
+
+The two dimensions where GPT-4o scores lower with context are Efficiency ($-$0.059) and Resource Management ($-$0.010) --- both near zero and likely not meaningful.
+
+\subsection{Claude: Context as Evaluative Signal}
+
+Claude's response to call-site context is strikingly different. While the overall delta is small ($-$0.084), the pattern across dimensions reveals systematic decreases on several important criteria:
+
+\begin{itemize}
+    \item \textbf{Efficiency} ($-$0.332): Claude's largest negative delta. When Claude sees how a function is called --- including how frequently, with what arguments, and in what computational context --- it appears to apply more stringent efficiency standards. A function that seems efficient in isolation may be revealed by its call sites to be called in a hot loop or with large inputs.
+    \item \textbf{Code Consistency} ($-$0.322): Seeing a function in the context of its callers may highlight stylistic inconsistencies between the function and the broader codebase that are invisible in isolation.
+    \item \textbf{Scalability} ($-$0.282): Related to efficiency, Claude appears to downgrade scalability scores when call-site context reveals usage patterns that stress the function's design.
+\end{itemize}
+
+Notably, Claude shows positive deltas on Reusability (+0.129) and Error Handling (+0.074), suggesting that even the more critical model finds some dimensions that benefit from context.
+
+\subsection{Worked Example: \texttt{merge\_setting} from requests}
+
+To illustrate concretely how call-site context changes LLM feedback, we examine \texttt{merge\_setting} from the requests library's \texttt{sessions.py} --- a function with 8 detected call sites, one of the highest counts in our dataset. This function takes a request-level setting and a session-level setting and merges them, with the request-level value taking priority.
+
+Under \textbf{Condition A} (no context), GPT-4o described the function as:
+
+\begin{quote}
+\textit{``The method is well-structured and follows good practices for merging settings, with clear logic and efficient handling of dictionary merging. However, it could benefit from improved documentation and error handling.''}
+\end{quote}
+
+Under \textbf{Condition B} (with 8 call sites showing the function being called to merge proxies, headers, authentication settings, timeouts, and stream flags), GPT-4o's overall score remained 8 but its feedback shifted toward:
+
+\begin{quote}
+\textit{``The method is well-structured and adheres to many best practices, but there are areas for improvement, particularly in documentation and handling of edge cases.''}
+\end{quote}
+
+Table~\ref{tab:merge_setting} shows per-dimension scores for this method under both conditions for both models.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+& \multicolumn{2}{c}{\textbf{GPT-4o}} & \multicolumn{2}{c}{\textbf{Claude}} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+\textbf{Dimension} & \textbf{Cond. A} & \textbf{Cond. B} & \textbf{Cond. A} & \textbf{Cond. B} \\
+\midrule
+Overall        & 8 & 8 & 8 & 8 \\
+Documentation  & 7 & 7 & 7 & 6 \\
+Error Handling & 7 & 7 & 7 & 6 \\
+Testability    & 8 & 8 & 9 & 9 \\
+Efficiency     & 8 & 8 & 8 & 8 \\
+\bottomrule
+\end{tabular}
+\caption{Per-dimension scores for \texttt{merge\_setting} under both conditions. Claude lowers Documentation and Error Handling scores with context; GPT-4o scores remain stable.}
+\label{tab:merge_setting}
+\end{table}
+
+Having seen 8 call sites --- including calls that merge proxies, authentication credentials, and timeout values --- Claude can now observe that the docstring does not document the types or semantics of its parameters, which matters more given the diversity of values the function receives in practice.
+
+\subsection{Per-Repository Results}
+
+Table~\ref{tab:per_repo} shows the overall score delta broken down by repository for each model.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Repository} & \textbf{GPT-4o $\Delta$ (Overall)} & \textbf{Claude $\Delta$ (Overall)} \\
+\midrule
+requests & +0.280 & $-$0.120 \\
+flask    & +0.242 & $-$0.091 \\
+click    & +0.318 & $-$0.072 \\
+httpx    & +0.334 & $-$0.083 \\
+\midrule
+\textbf{All} & \textbf{+0.309} & \textbf{$-$0.084} \\
+\bottomrule
+\end{tabular}
+\caption{Mean overall score delta by repository. The directional pattern is consistent across all four repositories.}
+\label{tab:per_repo}
+\end{table}
+
+The directional pattern --- GPT-4o scoring higher with context, Claude scoring lower --- is consistent across all four repositories. This consistency suggests the effect is a genuine property of how these models respond to call-site context, not an artifact of any one repository's code characteristics.
+
+\subsection{Answer to RQ1}
+
+\textit{Yes, call-site context substantially changes the scores LLMs assign.} The direction of change is model-specific: GPT-4o consistently scores higher with context (particularly on Documentation, Error Handling, and Testability), while Claude consistently scores lower (particularly on Efficiency, Code Consistency, and Scalability). This divergence is consistent across all four repositories.
+
+\section{RQ2: Inter-Model Agreement --- Does Context Help Models Agree?}
+
+\subsection{Aggregate Results}
+
+Table~\ref{tab:agreement_full} shows inter-model agreement (Pearson $r$ between GPT-4o and Claude overall scores) per condition, both in aggregate and per repository.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Repository} & \textbf{Condition A (No Context)} & \textbf{Condition B (With Context)} \\
+\midrule
+requests & 0.541 & 0.378 \\
+flask    & 0.489 & 0.352 \\
+click    & 0.598 & 0.441 \\
+httpx    & 0.551 & 0.423 \\
+\midrule
+\textbf{All} & \textbf{0.563} & \textbf{0.409} \\
+\bottomrule
+\end{tabular}
+\caption{Inter-model agreement (Pearson $r$, overall score) per condition per repository. Agreement decreases with context in all four repositories.}
+\label{tab:agreement_full}
+\end{table}
+
+Inter-model agreement decreases with context in every repository, from a mean of 0.563 under Condition A to 0.409 under Condition B --- a reduction of 0.154 Pearson $r$ units (27\% relative decrease).
+
+\subsection{Interpretation}
+
+This finding is counterintuitive. One might expect that providing both models with the same additional information would help them converge on a more similar assessment. Instead, the opposite occurs. A plausible explanation is that call-site context activates different \textit{interpretive frameworks} in the two models. Without context, both models default to evaluating the function against general coding standards --- a shared frame of reference that produces moderate agreement. With context, each model interprets the usage patterns through its own lens: GPT-4o reads call-site frequency and diversity as a signal of the function's maturity and reliability; Claude reads the same patterns as a source of additional requirements that the function may not fully satisfy.
+
+\subsection{Per-Dimension Agreement}
+
+Table~\ref{tab:agreement_dim} shows inter-model agreement broken down by selected dimensions for both conditions.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Dimension} & \textbf{Condition A} & \textbf{Condition B} \\
+\midrule
+Overall                & 0.563 & 0.409 \\
+Documentation          & 0.491 & 0.287 \\
+Error Handling         & 0.538 & 0.401 \\
+Efficiency             & 0.512 & 0.334 \\
+Testability            & 0.559 & 0.418 \\
+Reusability            & 0.571 & 0.462 \\
+Readability            & 0.601 & 0.489 \\
+Code Consistency       & 0.548 & 0.391 \\
+\bottomrule
+\end{tabular}
+\caption{Inter-model agreement (Pearson $r$) per dimension for selected dimensions. Agreement decreases with context across all dimensions shown.}
+\label{tab:agreement_dim}
+\end{table}
+
+The decrease in agreement is most pronounced for Documentation (0.491 $\to$ 0.287) --- the same dimension where the absolute score delta is largest for GPT-4o (+0.799). This suggests that documentation quality is the dimension where call-site context has the most divergent effect on the two models.
+
+\subsection{Answer to RQ2}
+
+\textit{No, call-site context does not increase inter-model agreement. It decreases it.} Agreement drops from Pearson $r$ = 0.563 to 0.409 in aggregate, and this decrease is consistent across all four repositories and all 16 dimensions. This suggests that structural context amplifies model-specific interpretive biases rather than helping models converge on a shared ground truth.
+
+\section{RQ3: Score Variance --- Does Context Improve Consistency?}
+
+\subsection{Aggregate Results}
+
+Table~\ref{tab:variance_full} shows mean scoring variance per model per condition, broken down by repository.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+& \multicolumn{2}{c}{\textbf{GPT-4o}} & \multicolumn{2}{c}{\textbf{Claude}} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+\textbf{Repository} & \textbf{Cond. A} & \textbf{Cond. B} & \textbf{Cond. A} & \textbf{Cond. B} \\
+\midrule
+requests & 1.512 & 1.089 & 2.701 & 2.498 \\
+flask    & 1.438 & 1.012 & 2.589 & 2.381 \\
+click    & 1.471 & 1.034 & 2.644 & 2.412 \\
+httpx    & 1.421 & 0.991 & 2.619 & 2.408 \\
+\midrule
+\textbf{All} & \textbf{1.459} & \textbf{1.029} & \textbf{2.630} & \textbf{2.425} \\
+\bottomrule
+\end{tabular}
+\caption{Mean scoring variance across 16 criteria per model per condition. Lower variance indicates more consistent scoring.}
+\label{tab:variance_full}
+\end{table}
+
+\subsection{Interpretation}
+
+Both models produce more consistent scores with context, and this pattern is consistent across all four repositories. GPT-4o shows a larger absolute reduction (1.459 $\to$ 1.029, a 29\% decrease) compared to Claude (2.630 $\to$ 2.425, an 8\% decrease).
+
+The consistently lower variance of GPT-4o compared to Claude --- both with and without context --- is a secondary finding: GPT-4o produces more uniform scores across quality dimensions regardless of condition. Claude's higher variance suggests it differentiates more aggressively between dimensions, assigning some dimensions much higher scores than others for the same function.
+
+The variance reduction with context may be explained by the additional grounding that call-site examples provide. Without context, a model must independently assess each dimension based solely on the function body, which may lead to inconsistencies between related dimensions. With context, the usage examples provide a consistent external frame of reference that anchors scores across dimensions.
+
+\subsection{Answer to RQ3}
+
+\textit{Yes, call-site context reduces scoring variance for both models.} GPT-4o shows a 29\% reduction in variance, Claude an 8\% reduction. Structural context makes LLM scoring more internally consistent, even if it does not increase inter-model agreement.
+
+% ============================================================
+% CHAPTER 5: DISCUSSION AND CONCLUSION
+% ============================================================
+\chapter{DISCUSSION AND CONCLUSION}
+
+\section{The Confirmatory vs. Evaluative Hypothesis}
+
+The most striking finding of this study is the divergence between GPT-4o and Claude in their response to call-site context. We propose a framework to explain this divergence: the \textit{confirmatory versus evaluative} hypothesis.
+
+Under this hypothesis, GPT-4o treats call-site context as \textit{confirmatory evidence} of code quality. When a function is called from multiple places, GPT-4o infers that it must be working well enough to be relied upon --- a form of social proof from the codebase. This leads GPT-4o to raise scores on dimensions like Documentation and Error Handling: the function must be documented well enough that callers know how to use it, and must handle errors well enough that callers do not need to guard against failures.
+
+Claude, by contrast, treats call-site context as \textit{evaluative evidence} --- a source of additional requirements against which to assess the function. When Claude sees how a function is called, it uses that information to identify gaps: cases where the function could be more efficient given its actual usage pattern, more consistent with the coding style of its callers, or more scalable given the volumes implied by its call sites.
+
+Both interpretive frameworks are defensible from a code review perspective. A human reviewer assessing whether code is ready to ship might lean confirmatory, while a reviewer focused on long-term maintainability might lean evaluative. The fact that two leading LLMs adopt consistently different frameworks --- and that this difference persists across four diverse repositories --- suggests that these models have internalized different implicit theories of what code review is for.
+
+\section{Implications for Automated Code Review System Design}
+
+\subsection{Single-Model Systems Are Systematically Biased}
+
+The divergence between GPT-4o and Claude (RQ2) demonstrates that the choice of model has a substantial effect on the direction of scores when call-site context is provided. A system that uses GPT-4o will systematically score code higher with context; a system that uses Claude will systematically score it slightly lower. Neither direction is intrinsically correct --- the appropriate direction depends on what the review system is optimizing for.
+
+Organizations deploying LLM-based code review systems should be aware that their choice of model introduces a systematic bias, and that this bias is amplified --- not reduced --- by providing structural context.
+
+\subsection{Ensemble Approaches May Reduce Bias}
+
+Since GPT-4o and Claude respond to context in opposite directions, an ensemble approach that averages their scores may partially cancel out model-specific biases. Under Condition B, GPT-4o's overall delta of +0.309 and Claude's delta of $-$0.084 would average to approximately +0.113 --- a modest positive effect that is more likely to reflect genuine quality signals than either model's assessment alone. Future work should investigate whether ensemble scoring produces evaluations that are more reliable than single-model approaches.
+
+\subsection{Context Is Most Valuable for Behavioral Dimensions}
+
+The largest score deltas for both models occur on behavioral dimensions (Error Handling, Efficiency, Scalability) rather than structural dimensions (Readability, Code Consistency, Encapsulation). This makes intuitive sense: behavioral properties depend on how a function is actually used, which call-site context directly reveals. Structural properties are largely intrinsic to the function body and are less affected by usage patterns. This suggests a practical design choice: call-site context extraction is most valuable when the review goal is to assess behavioral correctness and robustness.
+
+\subsection{Consistency Improvement Is a Genuine Benefit}
+
+Despite disagreement about the direction of score changes (RQ1 and RQ2), both models agree on one thing: scores are more internally consistent with context (RQ3). An automated code review system that assigns highly inconsistent scores across quality dimensions for the same function is difficult to interpret and may be dismissed as unreliable. Context helps both models produce more coherent, interpretable evaluations.
+
+\section{Relationship to Prior Work}
+
+Smoli\'{c} et al. \cite{Smolic2024MIPRO} established that unstructured LLM code evaluation is unreliable. Our work builds on this finding by demonstrating that even with a structured 16-dimension rubric, the \textit{content} of the prompt --- specifically, whether call-site context is included --- has a substantial effect on the scores assigned. Structure alone is not sufficient; the information provided within that structure also matters.
+
+Smoli\'{c} et al. \cite{Smolic2024FewShot} showed that few-shot examples improve LLM code grading. Our results are consistent in spirit --- additional context changes evaluation behavior --- but differ in an important way: few-shot examples provide evaluative context (what score a similar piece of code received), while call-site context provides structural context (how this specific function is used). The divergent effects across models suggest that structural context activates different interpretive mechanisms than evaluative few-shot examples.
+
+Li et al.'s CodeReviewer \cite{li2022codereviewer} represents the state of the art in LLM-based code review without codebase context. Our study can be read as an empirical investigation of what CodeReviewer and similar systems are missing by not incorporating cross-file usage information. The substantial score changes we observe --- particularly the +0.80 documentation delta for GPT-4o --- suggest that this missing context is not trivial.
+
+The decrease in inter-model agreement we observe (RQ2) is, to our knowledge, not previously reported in the literature. Prior work has generally assumed that richer context helps models converge on more accurate assessments. Our results challenge this assumption.
+
+\section{Threats to Validity}
+
+\subsection{Internal Validity}
+
+The primary threat to internal validity is that we cannot fully control for the specific content of call-site examples. Different methods have call sites of different lengths, complexity, and informativeness. We do not control for call-site informativeness, and this variability may introduce noise into our estimates. A secondary threat concerns our temperature setting of 0.2: LLM outputs at non-zero temperature are inherently stochastic, and we do not repeat evaluations to measure intra-model variance. The consistency of our results across 204 methods and four repositories provides reassurance, but future work should include repeated evaluations to formally assess intra-model reliability.
+
+A third threat concerns prompt design. Both models receive the same prompt, which was designed for GPT-4o and may not be optimally suited to Claude. Model-specific prompt tuning could reduce or amplify the observed differences.
+
+\subsection{External Validity}
+
+Our dataset is limited to four Python HTTP and CLI libraries. These libraries share important characteristics: they are mature projects maintained by experienced developers, follow consistent Python conventions, and belong to the infrastructure and tooling domain. Our findings may not generalize to codebases with different characteristics --- different programming languages, lower code quality levels, or different application domains.
+
+The generalizability concern is most acute in three dimensions. First, Python's dynamic typing may interact differently with call-site context than statically-typed languages like Java or Rust, where type information already provides some structural grounding. Second, all four repositories represent high-quality code; the effect of context may differ for lower-quality code such as student submissions or legacy systems. Third, our libraries all perform I/O-heavy, network-oriented tasks; other domains may produce different patterns of context sensitivity.
+
+\subsection{Construct Validity}
+
+The most fundamental limitation of this study is the absence of human ground truth. We measure the change in LLM scores caused by call-site context, but we cannot directly assess whether higher or lower scores represent better code reviews. The 16-dimension rubric used in this study was designed specifically for this research and has not been independently validated through expert inter-rater reliability studies.
+
+\section{Future Work}
+
+\subsection{Human Ground Truth}
+
+The most important next step is to collect human expert evaluations of a subset of the 204 methods in our dataset under both conditions. A feasible design would recruit five to ten experienced software engineers and ask each to independently rate 30 to 40 methods on the same 16-dimension rubric. Human scores would serve as ground truth against which to measure whether LLM scores with context are closer to expert judgment than LLM scores without context. Such a study would also validate or challenge the 16-dimension rubric itself.
+
+\subsection{Improved Call-Site Selection}
+
+Our current approach includes all available call sites up to a cap of ten, sampled randomly when more are available. Future work should investigate whether selecting the most informative call sites --- those that maximize coverage of different code paths, argument types, or error conditions --- produces larger or more consistent effects than random sampling.
+
+\subsection{Other Forms of Structural Context}
+
+Call-site context is one of several forms of structural information extractable from a codebase. Future work should investigate callee context (bodies of functions called by the function under review), test context (bodies of unit tests that exercise the function), change history (recent commit messages and diffs), and data flow information. A factorial experiment varying which forms of context are included would allow researchers to decompose the total effect of structural enrichment.
+
+\subsection{Cross-Language Replication}
+
+Replicating this study in Java, TypeScript, or Rust would assess whether the findings generalize beyond Python. Statically-typed languages provide LLMs with additional structural information through type signatures, which may reduce the incremental value of call-site context. The confirmatory versus evaluative split may also manifest differently in languages with different conventions around error handling.
+
+\section{Conclusion}
+
+This project presented the first systematic empirical study of the effect of call-site context on LLM-generated code review quality. Using an AST-based context extraction system, we evaluated 204 Python methods from four open-source libraries under two conditions --- with and without call-site usage examples --- using two state-of-the-art LLMs: GPT-4o and Claude Sonnet.
+
+Our key findings are:
+
+\begin{enumerate}
+    \item \textbf{Context changes scores substantially but in model-specific directions.} GPT-4o scores functions higher with context (overall $\Delta$ = +0.309), particularly on Documentation (+0.80) and Error Handling (+0.58). Claude scores functions slightly lower (overall $\Delta$ = $-$0.084), particularly on Efficiency ($-$0.33) and Code Consistency ($-$0.32).
+    \item \textbf{Context decreases inter-model agreement.} Pearson $r$ drops from 0.563 to 0.409 --- a 27\% relative decrease --- consistently across all four repositories. Call-site context amplifies rather than resolves model-specific evaluation biases.
+    \item \textbf{Context improves scoring consistency.} Variance across quality dimensions drops for both models: 29\% for GPT-4o and 8\% for Claude. Structural context helps models produce more internally coherent evaluations.
+\end{enumerate}
+
+We interpret these findings through a \textit{confirmatory versus evaluative} framework: GPT-4o appears to use call-site context as social proof of a function's reliability, while Claude uses it as a source of additional requirements to assess against. Both are defensible review strategies, but their divergence underscores that automated code review systems are not neutral --- the choice of model encodes an implicit theory of what good code review means.
+
+These results suggest that the field of automated code review should move beyond single-model, function-in-isolation approaches. Call-site context is a rich and readily available signal --- extractable by AST analysis without any additional data collection --- that systematically changes LLM evaluations. The challenge for future work is to determine how to use this signal most effectively: whether through model-specific calibration, ensemble approaches, or richer context selection strategies. The AST-based extraction pipeline developed in this project provides a practical foundation for that future research.
+
+% ============================================================
+% APPENDICES
+% ============================================================
+\appendix
+
+\chapter{EVALUATION PROMPT TEMPLATE}
+
+The following prompt template was used for both Condition A and Condition B. In Condition A, the \texttt{\{usage\_example\}} field is omitted. In Condition B, it is populated with the bodies of all call-site functions.
+
+\begin{lstlisting}[language={}, caption={Evaluation prompt template used in both experimental conditions.}]
+Task: Evaluate the quality of each method on a scale
+of 1 to 10. Consider the following criteria:
+
+1.  Separation of Concerns
+2.  Documentation
+3.  Logic Clarity
+4.  Understandability
+5.  Efficiency
+6.  Error Handling
+7.  Testability
+8.  Reusability
+9.  Code Consistency
+10. Dependency Management
+11. Security Awareness
+12. Side Effects
+13. Scalability
+14. Resource Management
+15. Encapsulation and Access Control
+16. Readability of Complex Logic
+
+IMPORTANT: Return ONLY valid JSON using this structure:
+{
+  "overall_score": <1-10>,
+  "overall_feedback": "<assessment>",
+  "criteria_scores": {
+    "separation_of_concerns": <1-10>,
+    "documentation": <1-10>,
+    ...
+  },
+  "criteria_feedback": { ... },
+  "suggestions": ["...", "..."],
+  "strengths": ["...", "..."]
+}
+
+Method Definition:
+{method_body}
+
+{usage_example}
+\end{lstlisting}
+
+\chapter{COMPLETE PER-DIMENSION RESULTS}
+
+Table~\ref{tab:full_results} provides the complete score delta results for all 16 dimensions across both models.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+& \multicolumn{2}{c}{\textbf{GPT-4o}} & \multicolumn{2}{c}{\textbf{Claude}} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+\textbf{Dimension} & \textbf{Mean A} & \textbf{$\Delta$} & \textbf{Mean A} & \textbf{$\Delta$} \\
+\midrule
+Overall                & 7.21 & +0.309 & 6.88 & $-$0.084 \\
+Separation of Concerns & 7.44 & +0.088 & 7.01 & $-$0.109 \\
+Documentation          & 5.82 & +0.799 & 5.61 & +0.000 \\
+Logic Clarity          & 7.63 & +0.167 & 7.22 & $-$0.119 \\
+Understandability      & 7.51 & +0.132 & 7.19 & $-$0.005 \\
+Efficiency             & 7.38 & $-$0.059 & 7.04 & $-$0.332 \\
+Error Handling         & 6.71 & +0.583 & 6.44 & +0.074 \\
+Testability            & 6.89 & +0.387 & 6.62 & +0.030 \\
+Reusability            & 7.12 & +0.235 & 6.89 & +0.129 \\
+Code Consistency       & 8.01 & +0.137 & 7.78 & $-$0.322 \\
+Dependency Management  & 7.33 & +0.132 & 7.01 & $-$0.069 \\
+Security Awareness     & 7.22 & +0.216 & 6.98 & $-$0.134 \\
+Side Effects           & 7.44 & +0.201 & 7.21 & $-$0.064 \\
+Scalability            & 6.98 & +0.108 & 6.71 & $-$0.282 \\
+Resource Management    & 7.11 & $-$0.010 & 6.88 & $-$0.163 \\
+Encapsulation          & 7.38 & +0.034 & 7.14 & $-$0.030 \\
+Readability            & 7.62 & +0.132 & 7.34 & $-$0.030 \\
+\bottomrule
+\end{tabular}
+\caption{Complete results: mean Condition A score and mean delta for all 16 dimensions. ``Mean A'' is the baseline score without context; ``$\Delta$'' is the mean change when context is added.}
+\label{tab:full_results}
+\end{table}
+
+% ============================================================
+% REFERENCES
+% ============================================================
+\newpage
+\addcontentsline{toc}{chapter}{REFERENCES}
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
