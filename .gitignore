@@ -1,5 +1,6 @@
 venv/
 .coverage
+coverage.json
 **/__pycache__/**
 .env
 *.egg-info/
@@ -7,6 +8,8 @@ build/
 .codewise_cache/
 logs/
 outputs/
+datasets/repos/
+**/.DS_Store
 # Ignore everything in .vscode
 .vscode/*
 # But NOT the folder itself and NOT settings.json (or launch.json if needed)
