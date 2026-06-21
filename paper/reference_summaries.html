@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reference Summaries — Khorashadi (2026)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: #f4f2ee;
+    color: #1a1a1a;
+    line-height: 1.7;
+  }
+
+  header {
+    background: #1c2b3a;
+    color: #e8e0d0;
+    padding: 2.5rem 2rem 2rem;
+    text-align: center;
+  }
+  header h1 {
+    font-size: 1.5rem;
+    letter-spacing: 0.04em;
+    font-weight: normal;
+    margin-bottom: 0.4rem;
+  }
+  header p {
+    font-size: 0.85rem;
+    opacity: 0.65;
+    font-style: italic;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .section-header {
+    margin: 2.8rem 0 1.2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #1c2b3a;
+    font-size: 0.8rem;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #1c2b3a;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 4px;
+    border-left: 4px solid #3a7ca5;
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+
+  .card-meta {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #3a7ca5;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+  }
+
+  .card h2 {
+    font-size: 1.05rem;
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+    color: #111;
+  }
+
+  .card .authors {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.82rem;
+    color: #555;
+    margin-bottom: 0.2rem;
+  }
+
+  .card .venue {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.78rem;
+    color: #888;
+    font-style: italic;
+    margin-bottom: 1rem;
+  }
+
+  blockquote {
+    border-left: 3px solid #d0c8b8;
+    padding: 0.6rem 1rem;
+    margin: 0.8rem 0;
+    color: #444;
+    font-style: italic;
+    font-size: 0.9rem;
+    background: #faf8f4;
+    border-radius: 0 3px 3px 0;
+  }
+
+  .relevance {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.85rem;
+    margin-top: 0.9rem;
+    color: #222;
+  }
+
+  .relevance strong {
+    color: #1c2b3a;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: #e8f0f7;
+    color: #3a7ca5;
+    border-radius: 2px;
+    padding: 0.15rem 0.5rem;
+    margin-right: 0.3rem;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+  }
+
+  footer {
+    text-align: center;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.75rem;
+    color: #aaa;
+    padding: 2rem 0 1rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Reference Summaries</h1>
+  <p>Evaluating the Impact of Call Site Context on LLM-Based Code Review Using AST Analysis &mdash; Khorashadi (2026) &mdash; 20 references</p>
+</header>
+
+<div class="container">
+
+<!-- ===== CODE REVIEW: PROCESS AND EMPIRICAL STUDIES ===== -->
+<div class="section-header">Code Review &mdash; Process &amp; Empirical Studies</div>
+
+<div class="card">
+  <div class="card-meta">bacchelli2013expectations</div>
+  <h2>Expectations, Outcomes, and Challenges of Modern Code Review</h2>
+  <div class="authors">Alberto Bacchelli &amp; Christian Bird</div>
+  <div class="venue">ICSE 2013 &mdash; San Francisco, CA &mdash; DOI: 10.1109/ICSE.2013.6606617</div>
+  <span class="tag">Code Review</span><span class="tag">Empirical Study</span><span class="tag">Microsoft</span>
+  <blockquote>
+    "While finding defects remains the main motivation for review, reviews are less about defects than expected and instead provide additional benefits such as knowledge transfer, increased team awareness, and creation of alternative solutions to problems. Moreover, we find that code and change understanding is the key aspect of code reviewing."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Cited in Chapter 1 as the foundational motivation: reviewers naturally seek to <em>understand</em> code in context, not merely find bugs. This directly motivates providing LLMs with call-site context — mirroring how a human reviewer reads surrounding code before assessing a function. Also cited in Chapter 2 to establish that code review's value lies in higher-level concerns that static tools cannot address.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">sadowski2018modern</div>
+  <h2>Modern Code Review: A Case Study at Google</h2>
+  <div class="authors">Caitlin Sadowski, Emma Söderberg, Luke Church, Michal Sipko &amp; Alberto Bacchelli</div>
+  <div class="venue">ICSE-SEIP 2018 &mdash; Gothenburg, Sweden &mdash; DOI: 10.1145/3183519.3183525</div>
+  <span class="tag">Code Review</span><span class="tag">Scalability</span><span class="tag">Google</span>
+  <blockquote>
+    "The process at Google is markedly lighter weight than in other contexts, based on a single reviewer, quick iterations, small changes, and a tight integration with the code review tool... scalability is the primary problem facing industrial code review: both codebases and engineering teams continue to scale, but the amount of code to review grows more quickly than the number of people available to review it."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Establishes the industrial reality that motivates automated code review: code review consumes 10–15% of development time at scale, and lightweight tools are preferred over comprehensive but slow ones. Used in Chapter 1 to frame the cost of code review, and in Chapter 2 to introduce the scalability tradeoff that AST-based call-site extraction directly addresses (completing in seconds on any Python repository).
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">rigby2013convergent</div>
+  <h2>Convergent Contemporary Software Peer Review Practices</h2>
+  <div class="authors">Peter C. Rigby &amp; Christian Bird</div>
+  <div class="venue">ESEC/FSE 2013 &mdash; Saint Petersburg, Russia &mdash; DOI: 10.1145/2491411.2491444</div>
+  <span class="tag">Code Review</span><span class="tag">Empirical Study</span><span class="tag">Open Source</span>
+  <blockquote>
+    "Despite differences among projects, many of the characteristics of the review process have independently converged to similar values... effective code review is lightweight — reviewers do not exhaustively inspect every line but instead focus on the most consequential changes."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Identifies five convergent norms in code review: small, focused reviews by a small number of reviewers completed quickly. Used in Chapter 2 to argue that any practical automated code review tool must be lightweight and fast — a constraint that AST-based call-site extraction satisfies by design.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">czerwonka2015code</div>
+  <h2>Code Reviews Do Not Find Bugs: How the Current Code Review Best Practice Slows Us Down</h2>
+  <div class="authors">Jacek Czerwonka, Michaela Greiler &amp; Jack Tilford</div>
+  <div class="venue">ICSE 2015 &mdash; Florence, Italy &mdash; IEEE</div>
+  <span class="tag">Code Review</span><span class="tag">Bug Finding</span><span class="tag">Microsoft</span>
+  <blockquote>
+    "Code reviews often do not find functionality defects that should block a code submission. Only about 15% of comments provided by reviewers indicate a possible defect... Rather, it is feedback related to the long-term code maintainability that comprises a much larger portion of comments provided by reviewers; at least 50% of all."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Reinforces the case for LLM-based review: the bulk of review value is in higher-level quality concerns (naming, design, maintainability) that static analysis tools cannot address but LLMs can assess across 16 rubric dimensions. Used in Chapter 2 alongside Bacchelli to justify the complementary role of LLM-based review.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">mcintosh2016empirical</div>
+  <h2>An Empirical Study of the Impact of Modern Code Review Practices on Software Quality</h2>
+  <div class="authors">Shane McIntosh, Yasutaka Kamei, Bram Adams &amp; Ahmed E. Hassan</div>
+  <div class="venue">Empirical Software Engineering, Vol. 21, No. 5, 2016 &mdash; Springer &mdash; DOI: 10.1007/s10664-015-9381-9</div>
+  <span class="tag">Code Review</span><span class="tag">Software Quality</span><span class="tag">Empirical Study</span>
+  <blockquote>
+    "Code review coverage, participation, and expertise share a significant link with software quality. Commits which received more thorough review — more reviewers, more comments, higher coverage — were associated with significantly fewer post-release defects."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Provides empirical grounding that deeper code review translates to fewer defects, motivating continued investment in automated tools that can increase review depth. Used in Chapter 2 to justify LLM-based approaches capable of reasoning about quality dimensions beyond syntactic conformance.
+  </div>
+</div>
+
+
+<!-- ===== LLM-BASED CODE EVALUATION ===== -->
+<div class="section-header">LLM-Based Code Evaluation</div>
+
+<div class="card">
+  <div class="card-meta">li2022codereviewer</div>
+  <h2>Automating Code Review Activities by Large-Scale Pre-training</h2>
+  <div class="authors">Zhiyu Li, Shuai Lu, Daya Guo, Nan Duan, Shailesh Jannu, Grant Jenks, Deep Majumder, Jared Green, Alexey Svyatkovskiy, Shengyu Fu &amp; Neel Sundaresan</div>
+  <div class="venue">ESEC/FSE 2022 &mdash; Singapore &mdash; DOI: 10.1145/3540250.3549081</div>
+  <span class="tag">Code Review</span><span class="tag">Pre-training</span><span class="tag">LLM</span>
+  <blockquote>
+    "We focus on three key tasks related to code review activities, including code change quality estimation, review comment generation and code refinement... the method they employ is fairly standard across the space: given a code diff, the model generates feedback. However, there is no context of how the function being changed is used elsewhere in the codebase."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Represents the prior state of the art in automated LLM-based code review, and the primary system compared against in the comparison table (Chapter 2). CodeReviewer evaluates each function independently from a diff — exactly the isolation this paper addresses by injecting call-site context from AST traversal.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">Smolic2024MIPRO</div>
+  <h2>LLM Generative AI and Students' Exam Code Evaluation: Qualitative and Quantitative Analysis</h2>
+  <div class="authors">E. Smolić, M. Pavelić, B. Boras, I. Mekterović &amp; T. Jagušt</div>
+  <div class="venue">MIPRO 2024 &mdash; Opatija, Croatia &mdash; DOI: 10.1109/MIPRO60963.2024.10569820</div>
+  <span class="tag">LLM Evaluation</span><span class="tag">Code Grading</span><span class="tag">Few-Shot</span>
+  <blockquote>
+    "Automatized score assignment by those LLMs based on code quality is at best comparable to random assignment with multiple possible explanations. Few-shot prompting for the task of code grading better adjusted to preferential criteria can work in a very limited scope."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Key motivating paper: contains two experiments showing (1) zero-shot LLM code grading is essentially random without a structured rubric, and (2) few-shot grading improves alignment but only marginally. Both findings directly motivate the 16-criterion structured rubric used in this paper. Cited in the Answer to RQ1 to connect context-grounding effects.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">yuen2024prompting</div>
+  <h2>Prompting Matters: Assessing the Effect of Prompting Techniques on LLM-Generated Class Code</h2>
+  <div class="authors">Adam Yuen, John Pangas, Md Mainul Hasan Polash &amp; Ahmad Abdellatif</div>
+  <div class="venue">ICSME 2025 &mdash; IEEE &mdash; DOI: 10.1109/ICSME64153.2025.00083</div>
+  <span class="tag">Prompting</span><span class="tag">Code Generation</span><span class="tag">LLM</span>
+  <blockquote>
+    "Strategies incorporating more contextual guidance (Few-Shot, Chain-of-Thought, and Chain-of-Thought-Few-Shot) outperform Zero-Shot prompting by up to 25% in functional correctness, 31% in BLEU-3 score, and 50% in ROUGE-L, while also producing code that is more readable and maintainable."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Corroborates from the code generation angle that what goes into the prompt is a primary driver of LLM behavior on code tasks. While Smolić et al. demonstrate the effect in the grading domain, Yuen et al. demonstrate it independently in the generation domain — together they establish that prompt context consistently shapes LLM code behavior across task types.
+  </div>
+</div>
+
+
+<!-- ===== LLM AS AUTOMATED EVALUATOR ===== -->
+<div class="section-header">LLMs as Automated Evaluators</div>
+
+<div class="card">
+  <div class="card-meta">zheng2023judging</div>
+  <h2>Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena</h2>
+  <div class="authors">Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu et al.</div>
+  <div class="venue">NeurIPS 2023, Vol. 36 &mdash; Track on Datasets and Benchmarks</div>
+  <span class="tag">LLM-as-Judge</span><span class="tag">Evaluation Bias</span><span class="tag">Inter-Model Agreement</span>
+  <blockquote>
+    "Strong LLMs (GPT-4, Claude) produce judgments that correlate well with human assessments on many tasks, but also identified systematic biases: position bias, verbosity bias, and self-enhancement bias. Different LLMs can produce divergent quality judgments even when given identical inputs."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Directly informs the interpretation of all three RQs. The biases documented here explain why an LLM reviewer may systematically favor code resembling its own training distribution. Used in RQ2 to explain why call-site context amplifies rather than resolves inter-model divergence — both models interpret the same structural context through their own biased lens.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">liu2023geval</div>
+  <h2>G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment</h2>
+  <div class="authors">Yang Liu, Dan Iter, Yichong Xu, Shuohang Wang, Ruochen Xu &amp; Chenguang Zhu</div>
+  <div class="venue">EMNLP 2023 &mdash; pages 2511–2522</div>
+  <span class="tag">LLM Evaluation</span><span class="tag">Rubric Design</span><span class="tag">Structured Prompting</span>
+  <blockquote>
+    "LLM-based metrics are sensitive to the instructions and prompts, and chain-of-thought can improve the performance of LLM-based evaluators by providing more context and guidance. Structured, criterion-specific evaluation prompts substantially improve the alignment of LLM judgments with human assessments, compared to holistic impression scoring."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Directly informs the 16-criterion rubric design: G-Eval demonstrates that structured, criterion-specific prompts produce more human-aligned judgments and reduce score variance. Used in RQ3 to explain why call-site context reduces scoring variance — it provides a concrete frame of reference that constrains the degrees of freedom in scoring, analogous to how G-Eval's rubric constrains holistic impression scoring.
+  </div>
+</div>
+
+
+<!-- ===== IN-CONTEXT LEARNING AND PROMPTING ===== -->
+<div class="section-header">In-Context Learning &amp; Prompting</div>
+
+<div class="card">
+  <div class="card-meta">brown2020gpt3</div>
+  <h2>Language Models are Few-Shot Learners</h2>
+  <div class="authors">Tom B. Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared Kaplan, Prafulla Dhariwal et al.</div>
+  <div class="venue">NeurIPS 2020, Vol. 33 &mdash; pages 1877–1901</div>
+  <span class="tag">GPT-3</span><span class="tag">In-Context Learning</span><span class="tag">Few-Shot</span>
+  <blockquote>
+    "GPT-3 is applied without any gradient updates or fine-tuning, with tasks and few-shot demonstrations specified purely via text interaction with the model. This property — in-context learning — established that what goes into the prompt is a primary driver of model behavior, not just a task description."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Establishes in-context learning as the theoretical foundation for why call-site context matters: adding call-site examples to a code review prompt is a form of in-context enrichment, and GPT-3's results suggest the quality and relevance of that context substantially influences the model's output. Used in Chapter 2, Section 2.6.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">wei2022chain</div>
+  <h2>Chain-of-Thought Prompting Elicits Reasoning in Large Language Models</h2>
+  <div class="authors">Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Brian Ichter, Fei Xia, Ed Chi, Quoc Le &amp; Denny Zhou</div>
+  <div class="venue">NeurIPS 2022, Vol. 35 &mdash; Google Research</div>
+  <span class="tag">Chain-of-Thought</span><span class="tag">Prompting</span><span class="tag">Reasoning</span>
+  <blockquote>
+    "Generating a chain of thought — a series of intermediate reasoning steps — significantly improves the ability of large language models to perform complex reasoning. The mechanism is the same as in-context learning more broadly: richer, more structured context in the prompt elicits more structured reasoning in the output."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Analogous to call-site context: just as chain-of-thought gives a model concrete intermediate steps to reason about, call-site context gives the model concrete evidence about how a function is actually used. Used in Chapter 2, Section 2.6 to explain why contextual enrichment consistently improves LLM output quality on complex reasoning tasks.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">ouyang2022instructgpt</div>
+  <h2>Training Language Models to Follow Instructions with Human Feedback</h2>
+  <div class="authors">Long Ouyang, Jeff Wu, Xu Jiang, Diogo Almeida, Carroll L. Wainwright, Pamela Mishkin, Chong Zhang, Sandhini Agarwal, Katarina Slama, Alex Ray et al.</div>
+  <div class="venue">NeurIPS 2022, Vol. 35 &mdash; OpenAI</div>
+  <span class="tag">RLHF</span><span class="tag">Instruction Tuning</span><span class="tag">Alignment</span>
+  <blockquote>
+    "Outputs from the 1.3B parameter InstructGPT model are preferred to outputs from the 175B GPT-3, despite having 100x fewer parameters. Both GPT-4o and Claude Sonnet are successors to this alignment paradigm: both are instruction-tuned models trained to follow explicit evaluation rubrics and return structured outputs."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Establishes RLHF alignment as the reason GPT-4o and Claude correctly follow the evaluation rubric in both conditions. Their opposite responses to call-site context cannot be explained by prompt-following failure — they follow the rubric correctly in both conditions. The divergence therefore reflects differences in how each model was trained to <em>interpret and weight</em> contextual evidence, not how well they follow instructions.
+  </div>
+</div>
+
+
+<!-- ===== FOUNDATION MODELS FOR CODE ===== -->
+<div class="section-header">Foundation Models for Code</div>
+
+<div class="card">
+  <div class="card-meta">chen2021codex</div>
+  <h2>Evaluating Large Language Models Trained on Code (Codex)</h2>
+  <div class="authors">Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan, Henrique Ponde de Oliveira Pinto, Jared Kaplan et al.</div>
+  <div class="venue">arXiv:2107.03374 &mdash; OpenAI, 2021</div>
+  <span class="tag">Codex</span><span class="tag">GitHub Copilot</span><span class="tag">Code Generation</span>
+  <blockquote>
+    "Codex is unable to perform well on tasks when it needs to reason about out-of-context functions or variables. Isolated function review presents exactly this scenario: an LLM must reason about whether a function is well written but cannot see code that calls it."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Directly motivates call-site context: Codex (the model powering GitHub Copilot) demonstrates that context is a first-order factor in LLM code performance. Used in Chapter 2, Section 2.4 to show that the limitation of isolated function review is known from early code LLM research — this paper addresses it in the code review setting.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">devlin2019bert</div>
+  <h2>BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</h2>
+  <div class="authors">Jacob Devlin, Ming-Wei Chang, Kenton Lee &amp; Kristina Toutanova</div>
+  <div class="venue">arXiv:1810.04805 &mdash; Google AI Language, 2019</div>
+  <span class="tag">BERT</span><span class="tag">Pre-training</span><span class="tag">Transformers</span>
+  <blockquote>
+    "BERT is designed to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers. The pre-trained BERT model can be fine-tuned with just one additional output layer to create state-of-the-art models for a wide range of tasks."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    The foundational transfer-learning result that motivated all subsequent code intelligence models. Used in Chapter 2, Section 2.5 to trace the lineage from BERT to code-specific models (CodeBERT, GraphCodeBERT, CodeT5) that established pre-trained transformers as the dominant paradigm for code understanding.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">feng2020codebert</div>
+  <h2>CodeBERT: A Pre-Trained Model for Programming and Natural Languages</h2>
+  <div class="authors">Zhangyin Feng, Daya Guo, Duyu Tang, Nan Duan, Xiaocheng Feng, Ming Gong et al.</div>
+  <div class="venue">EMNLP 2020 &mdash; pages 1536–1547 &mdash; Association for Computational Linguistics</div>
+  <span class="tag">CodeBERT</span><span class="tag">NL-PL</span><span class="tag">Code Intelligence</span>
+  <blockquote>
+    "CodeBERT is the first large NL-PL pre-trained model for multiple programming languages. CodeBERT captures the semantic connection between natural language and programming language, and produces general-purpose representations that can broadly support NL-PL understanding tasks (e.g. natural language code search) and generation tasks (e.g. code documentation generation)."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Establishes that transformer models can learn joint representations of code and natural language, directly enabling the LLM-based code review approach. Used in Chapter 2, Section 2.5 to trace how BERT was applied to code; shows the structure of programming languages can be learned by transformers at scale.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">alon2019code2vec</div>
+  <h2>code2vec: Learning Distributed Representations of Code</h2>
+  <div class="authors">Uri Alon, Meital Zilberstein, Omer Levy &amp; Eran Yahav</div>
+  <div class="venue">Proc. ACM Program. Lang., Vol. 3 (POPL), 2019 &mdash; ACM</div>
+  <span class="tag">AST</span><span class="tag">Code Embeddings</span><span class="tag">Structural Analysis</span>
+  <blockquote>
+    "The distribution of labels can be inferred from syntactic paths in C [the code snippet]. By decomposing code to a collection of paths in its abstract syntax tree, and learning the atomic representation of each path simultaneously with learning how to aggregate a set of them, code2vec produces embeddings that capture the structural shape of a function."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Demonstrates that AST path contexts are predictive of semantic properties (method names), establishing the foundation for using AST structure to reason about code. Used in Chapter 2, Section 2.5 as a key precursor to the AST-based call-site extraction approach — both use AST traversal to extract structured information that captures function semantics.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">guo2021graphcodebert</div>
+  <h2>GraphCodeBERT: Pre-training Code Representations with Data Flow</h2>
+  <div class="authors">Daya Guo, Shuo Ren, Shuai Lu, Zhangyin Feng, Duyu Tang, Shujie Liu et al.</div>
+  <div class="venue">ICLR 2021</div>
+  <span class="tag">GraphCodeBERT</span><span class="tag">Data Flow</span><span class="tag">Code Structure</span>
+  <blockquote>
+    "Instead of taking syntactic-level structure of code like abstract syntax tree (AST), we use data flow in the pre-training stage, which is a semantic-level structure of code that encodes the relation of 'where-the-value-comes-from' between variables. Such a semantic-level structure is less complex and does not bring an unnecessarily deep hierarchy of AST."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Extends the AST-based approach of code2vec by incorporating data flow graphs to capture variable semantics — showing that structural information beyond token sequences improves code understanding. Used in Chapter 2, Section 2.5 to show the progression of code representation learning that contextualizes the AST-based call-site extraction approach.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">wang2021codet5</div>
+  <h2>CodeT5: Identifier-aware Unified Pre-trained Encoder-Decoder Models for Code Understanding and Generation</h2>
+  <div class="authors">Yue Wang, Weishi Wang, Shafiq Joty &amp; Steven C.H. Hoi</div>
+  <div class="venue">EMNLP 2021 &mdash; pages 8696–8708</div>
+  <span class="tag">CodeT5</span><span class="tag">Encoder-Decoder</span><span class="tag">Identifiers</span>
+  <blockquote>
+    "We propose a novel identifier-aware pre-training objective that considers the crucial token type information (identifiers) from code. Developers tend to employ informative identifiers to make the code more understandable, so that these identifiers would generally preserve rich code semantics."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Advances code model state of the art with identifier-aware objectives that improve sensitivity to naming conventions — directly relevant to the Documentation and Understandability dimensions in the 16-criterion rubric. Used in Chapter 2, Section 2.5 to show that the field has increasingly recognized the importance of identifier-level semantics for code quality assessment.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-meta">allamanis2018survey</div>
+  <h2>A Survey of Machine Learning for Big Code and Naturalness</h2>
+  <div class="authors">Miltiadis Allamanis, Earl T. Barr, Premkumar Devanbu &amp; Charles Sutton</div>
+  <div class="venue">ACM Computing Surveys, Vol. 51, No. 4, 2018 &mdash; ACM</div>
+  <span class="tag">Survey</span><span class="tag">Big Code</span><span class="tag">Naturalness</span>
+  <blockquote>
+    "The availability of 'big code' suggests a new, data-driven approach to developing software tools: why not let the statistical distributional properties, estimated over large and representative software corpora, also influence the design of development tools? The key contribution of this survey is to elucidate the assumptions of ML-for-code approaches and their consequences — a tension between treating code as text and as structure."
+  </blockquote>
+  <div class="relevance">
+    <strong>Relevance to Paper</strong>
+    Provides the broadest framing for the ML-for-code research landscape. Used in Chapter 2, Section 2.5 to identify the core tension that this paper's methodology directly navigates: AST analysis extracts <em>structural</em> call-site information, which is then provided as <em>natural language text</em> in LLM prompts — combining structural precision with semantic reasoning capability.
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<footer>
+  Generated for Khorashadi (2026) &mdash; California State University, Sacramento &mdash; 20 references
+</footer>
+
+</body>
+</html>
