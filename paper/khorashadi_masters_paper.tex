@@ -254,13 +254,13 @@ Use of large language models (LLMs) is increasingly becoming common practice in 
 
 \noindent\textit{Sources of Data}
 
-The following open source libraries were used as sample repos for this project: requests, flasks, click and httpx. We looked at 204 python methods drawn from these libraries. These methods are analyzed using two popular large language models, GPT-4o and Claude Sonnet, under two experimental conditions: (A) function body only and (B) function body with call-site usage examples extracted through AST analysis. In total, 816 API calls are performed, with each method evaluated across 16 dimensions of code quality.
+The following open source libraries were used as sample repos for this project: requests, flask, click and httpx. We looked at 204 python methods drawn from these libraries. These methods are analyzed using two popular large language models, GPT-4o and Claude Sonnet, under two experimental conditions: (A) function body only and (B) function body with call-site usage examples extracted through AST analysis. In total, 816 API calls are performed, with each method evaluated across 16 dimensions of code quality.
 
 \vspace{0.3in}
 
 \noindent\textit{Conclusions Reached}
 
-Call-site context enrichment meaningfully changes LLM code review scores, however, our results show that the impact is model-specific. In general, GPT-4o scores functions higher with context (overall $\Delta$ = +0.309), while Claude scores functions lower (overall $\Delta$ = $-$0.084). When we drill deeper, the results revealed that GPT-4o scores documentation (+0.80) and error handling (+0.58) higher while Calude scores lower on efficiency ($-$0.33) and code consistency ($-$0.32). When looking at Inter-model agreement, we see that there is a decrease with context enrichment (Pearson $r$: 0.563 $\to$ 0.409), while scoring variance decreases for both models (GPT-4o: 29\%, Claude: 8\%). This suggests that context enrichment may amplify structural biases on per-model basis.
+Call-site context enrichment meaningfully changes LLM code review scores, however, our results show that the impact is model-specific. In general, GPT-4o scores functions higher with context (overall $\Delta$ = +0.309), while Claude scores functions lower (overall $\Delta$ = $-$0.084). When we drill deeper, the results revealed that GPT-4o scores documentation (+0.80) and error handling (+0.58) higher while Claude scores lower on efficiency ($-$0.33) and code consistency ($-$0.32). When looking at Inter-model agreement, we see that there is a decrease with context enrichment (Pearson $r$: 0.563 $\to$ 0.409), while scoring variance decreases for both models (GPT-4o: 29\%, Claude: 8\%). This suggests that context enrichment may amplify structural biases on per-model basis.
 
 \vspace{0.7in}
 
@@ -333,7 +333,7 @@ A major drawback of the current approach is that functions are evaluated in isol
 
 A seemingly well-designed function may hide certain design flaws only revealed with the consideration of usage context. For example, its error handling might fail to account for certain boundary conditions introduced by the caller. Its interface may be unnecessarily restrictive given the way the function is called. Its documentation might lack sufficient detail that is crucial for the caller. A human reviewer going over a pull request does not consider any function as a standalone piece of code. They read the surrounding code, they understand the calling context, and they use that context to inform the code review process \cite{bacchelli2013expectations}.
 
-This project explores leveraging AST anaylsis to automatically extract call-site context, specifically the bodies of functions that call a given method, and provide this context to LLMs during code review. The hypothesis here is that this context enrichment will change LLM evaluations in measurable and systematic ways.
+This project explores leveraging AST analysis to automatically extract call-site context, specifically the bodies of functions that call a given method, and provide this context to LLMs during code review. The hypothesis here is that this context enrichment will change LLM evaluations in measurable and systematic ways.
 
 \section{Research Questions}
 
@@ -437,7 +437,12 @@ Table~\ref{tab:related} summarizes how this project compares to the five most cl
 Bacchelli \& Bird \cite{bacchelli2013expectations} & None & --- & Industrial code & Reviewer goals \\
 Sadowski et al. \cite{sadowski2018modern}  & Diff context & Pull request & Industrial code & Process outcomes \\
 Smoli\'{c} et al. \cite{Smolic2024MIPRO}    & None    & ---   & Student code  & Grade accuracy \\
-Smoli\'{c} et al.  & Few-shot examples & Graded samples & Student code  & Grade consistency \\
+% REVIEW: This row is attributed to Smolić et al. (same paper, which contains both zero-shot and few-shot experiments).
+% However, the paragraph above (Sec 2.2) describes "the second paper" and cites \cite{yuen2024prompting} (Yuen et al.),
+% which is a different paper on LLM-generated class code -- not student code grading. Please verify which source this
+% row should cite: \cite{Smolic2024MIPRO} (if both rows are the two experiments in the same paper) or
+% \cite{yuen2024prompting} with "Yuen et al." as the author label (if this describes Yuen's study).
+Smoli\'{c} et al. \cite{Smolic2024MIPRO}  & Few-shot examples & Graded samples & Student code  & Grade consistency \\
 Li et al. \cite{li2022codereviewer}  & Code diff  & Pull request  & OSS diffs  & Review quality \\
 \textbf{This project}  & \textbf{Call-site context} & \textbf{AST traversal} & \textbf{OSS functions} & \textbf{Score delta, agreement, variance} \\
 \bottomrule
@@ -458,7 +463,7 @@ no context, added few-shot grading examples, or supplied diff context harvested 
 
 \section{Overview}
 
-To quantify the effect that call-site context has on code review quality generated by LLMs, we conduct a within-subjects experiment. Each experiment n-level comprises of a single python method evaluated under both prompt conditions by both LLMs. By controlling for every other variable, we can confidently attribute differences in outcome scores to the inclusion/exclusion of call-site context rather than some other confounding variable such as differences in model versioning, prompt wording, or characteristics of python methods themselves.
+To quantify the effect that call-site context has on code review quality generated by LLMs, we conduct a within-subjects experiment. Each experiment unit comprises a single Python method evaluated under both prompt conditions by both LLMs. By controlling for every other variable, we can confidently attribute differences in outcome scores to the inclusion/exclusion of call-site context rather than some other confounding variable such as differences in model versioning, prompt wording, or characteristics of python methods themselves.
 
 There are 4 steps to our experiment: 
 1. Generate Dataset: Python methods are sourced from 4 open source libraries.
