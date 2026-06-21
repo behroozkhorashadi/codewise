@@ -376,7 +376,7 @@ Automated code review with LLMs is a relatively new but quickly growing area of 
 
 The work of Smoli\'{c} et al. on automated assessment with LLMs are two particularly influential empirical studies that inform our research motivations directly. In the initial study \cite{Smolic2024MIPRO}, Smoli\'{c} et al. tested LLMs on student exam code submissions and discovered that without the use of some form of structured evaluation rubric, LLM performance is no better than randomly generating scores for automated assessment. This result is quite surprising: despite many capabilities LLMs have demonstrated with respect to understanding code, grading without a rubric appears to produce essentially meaningless results. 
 
-The second paper investigated this question in other ways: does evaluation become more stable or accurate if we do few shot prompting of the LLM, giving it example code/grade pairs before asking it to score additional code? The authors found that yes, few shot prompting does allow LLMs to grade code. This implies we can change performance by changing the prompt context \cite{yuen2024prompting}. Few-shot prompts and call-site context are complementary but orthogonal changes: few-shot prompts give the model evaluative context, while call-site context gives it structural context.
+In a second experiment within the same study, Smoli\'{c} et al. investigated whether few-shot prompting --- providing the LLM with example code/grade pairs before asking it to score new submissions --- could improve grading reliability. The results show that few-shot prompting can better align LLM output with grading criteria, though the effect is limited in scope \cite{Smolic2024MIPRO}. Yuen et al. \cite{yuen2024prompting} corroborate the general point from a different angle: across four prompting strategies for class-level code generation, richer prompt context consistently improved LLM output quality, confirming that what goes into the prompt is a primary driver of LLM behavior on code tasks. Few-shot prompts and call-site context are complementary but orthogonal changes: few-shot prompts give the model evaluative context, while call-site context gives it structural context.
 
 \section{AST Analysis as Structural Context}
 
@@ -437,11 +437,6 @@ Table~\ref{tab:related} summarizes how this project compares to the five most cl
 Bacchelli \& Bird \cite{bacchelli2013expectations} & None & --- & Industrial code & Reviewer goals \\
 Sadowski et al. \cite{sadowski2018modern}  & Diff context & Pull request & Industrial code & Process outcomes \\
 Smoli\'{c} et al. \cite{Smolic2024MIPRO}    & None    & ---   & Student code  & Grade accuracy \\
-% REVIEW: This row is attributed to Smolić et al. (same paper, which contains both zero-shot and few-shot experiments).
-% However, the paragraph above (Sec 2.2) describes "the second paper" and cites \cite{yuen2024prompting} (Yuen et al.),
-% which is a different paper on LLM-generated class code -- not student code grading. Please verify which source this
-% row should cite: \cite{Smolic2024MIPRO} (if both rows are the two experiments in the same paper) or
-% \cite{yuen2024prompting} with "Yuen et al." as the author label (if this describes Yuen's study).
 Smoli\'{c} et al. \cite{Smolic2024MIPRO}  & Few-shot examples & Graded samples & Student code  & Grade consistency \\
 Li et al. \cite{li2022codereviewer}  & Code diff  & Pull request  & OSS diffs  & Review quality \\
 \textbf{This project}  & \textbf{Call-site context} & \textbf{AST traversal} & \textbf{OSS functions} & \textbf{Score delta, agreement, variance} \\
